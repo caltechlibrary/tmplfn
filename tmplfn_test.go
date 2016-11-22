@@ -12,8 +12,8 @@ func TestJoin(t *testing.T) {
 		},
 	}
 
-	m2 := Join(m1, Time)
-	for _, key := range []string{"year", "helloworld"} {
+	m2 := Join(m1, TimeMap, PageMap)
+	for _, key := range []string{"year", "helloworld", "nl2p"} {
 		if _, OK := m2[key]; OK != true {
 			t.Errorf("Can't find %s in m2", key)
 		}

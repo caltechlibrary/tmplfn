@@ -33,8 +33,8 @@ import (
 )
 
 var (
-	// Time provides a common set of time/date related functions for use in text/template or html/template
-	Time = template.FuncMap{
+	// TimeMap provides a common set of time/date related functions for use in text/template or html/template
+	TimeMap = template.FuncMap{
 		"year": func(s string) string {
 			var (
 				dt  time.Time
@@ -153,7 +153,7 @@ var (
 		},
 	}
 
-	Page = template.FuncMap{
+	PageMap = template.FuncMap{
 		"nl2p": func(s string) string {
 			return strings.Replace(strings.Replace(s, "\n\n", "<p>", -1), "\n", "<br />", -1)
 		},
@@ -262,9 +262,9 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 	return result
 }
 
-// AssembleTemplate support a very simple template setup of an outer HTML file with a content include
-// used by caitpage and caitserver
-func AssembleTemplate(htmlFilename, includeFilename string, tmplFuncs template.FuncMaps) (*template.Template, error) {
+// AssemblePage support a very simple template setup of an outer HTML file with a content include
+// along with common template functions.
+func AssemblePage(htmlFilename, includeFilename string, tmplFuncs template.FuncMap) (*template.Template, error) {
 	htmlTmpl, err := ioutil.ReadFile(htmlFilename)
 	if err != nil {
 		return nil, fmt.Errorf("Can't read html template %s, %s", htmlFilename, err)
@@ -279,8 +279,8 @@ func AssembleTemplate(htmlFilename, includeFilename string, tmplFuncs template.F
 	return template.New(includeFilename).Parse(fmt.Sprintf(`{{ define "content" }}%s{{ end }}%s`, includeTmpl, htmlTmpl))
 }
 
-// Template generate a template struct with Time and Page functions attach.
-func Template(filename string, tmplFuncs template.FuncMap) (*template.Template, error) {
+// Page generate a template struct with Time and Page functions attach.
+func Page(filename string, tmplFuncs template.FuncMap) (*template.Template, error) {
 	src, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("Can't read template %s, %s", filename, err)
