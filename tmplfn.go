@@ -264,7 +264,7 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 
 // AssembleTemplate support a very simple template setup of an outer HTML file with a content include
 // used by caitpage and caitserver
-func AssembleTemplate(htmlFilename, includeFilename string) (*template.Template, error) {
+func AssembleTemplate(htmlFilename, includeFilename string, tmplFuncs template.FuncMaps) (*template.Template, error) {
 	htmlTmpl, err := ioutil.ReadFile(htmlFilename)
 	if err != nil {
 		return nil, fmt.Errorf("Can't read html template %s, %s", htmlFilename, err)
@@ -273,14 +273,20 @@ func AssembleTemplate(htmlFilename, includeFilename string) (*template.Template,
 	if err != nil {
 		return nil, fmt.Errorf("Can't read included template %s, %s", includeFilename, err)
 	}
-	return template.New(includeFilename).Funcs(Join(Time, Page)).Parse(fmt.Sprintf(`{{ define "content" }}%s{{ end }}%s`, includeTmpl, htmlTmpl))
+	if len(tmplFuncs) > 0 {
+		return template.New(includeFilename).Funcs(tmplFuncs).Parse(fmt.Sprintf(`{{ define "content" }}%s{{ end }}%s`, includeTmpl, htmlTmpl))
+	}
+	return template.New(includeFilename).Parse(fmt.Sprintf(`{{ define "content" }}%s{{ end }}%s`, includeTmpl, htmlTmpl))
 }
 
 // Template generate a template struct with Time and Page functions attach.
-func Template(filename string) (*template.Template, error) {
+func Template(filename string, tmplFuncs template.FuncMap) (*template.Template, error) {
 	src, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("Can't read template %s, %s", filename, err)
 	}
-	return template.New(filename).Funcs(Join(Time, Page)).Parse(string(src))
+	if len(tmplFuncs) > 0 {
+		return template.New(filename).Funcs(tmplFuncs).Parse(string(src))
+	}
+	return template.New(filename).Parse(string(src))
 }
