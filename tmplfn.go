@@ -23,9 +23,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/doc"
-	"io/ioutil"
 	"log"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"text/template"
@@ -33,6 +33,9 @@ import (
 )
 
 var (
+	// Version of tmplfn package
+	Version = `v0.0.2`
+
 	// TimeMap provides a common set of time/date related functions for use in text/template or html/template
 	TimeMap = template.FuncMap{
 		"year": func(s string) string {
@@ -262,31 +265,11 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 	return result
 }
 
-// AssemblePage support a very simple template setup of an outer HTML file with a content include
+// Assemble support a very simple template setup of an outer HTML file with a content include
 // along with common template functions.
-func AssemblePage(htmlFilename, includeFilename string, tmplFuncs template.FuncMap) (*template.Template, error) {
-	htmlTmpl, err := ioutil.ReadFile(htmlFilename)
-	if err != nil {
-		return nil, fmt.Errorf("Can't read html template %s, %s", htmlFilename, err)
+func Assemble(tmplFuncs template.FuncMap, templateFilenames ...string) (*template.Template, error) {
+	if len(templateFilenames) > 0 {
+		return template.New(path.Base(templateFilenames[0])).Funcs(tmplFuncs).ParseFiles(templateFilenames...)
 	}
-	includeTmpl, err := ioutil.ReadFile(includeFilename)
-	if err != nil {
-		return nil, fmt.Errorf("Can't read included template %s, %s", includeFilename, err)
-	}
-	if len(tmplFuncs) > 0 {
-		return template.New(includeFilename).Funcs(tmplFuncs).Parse(fmt.Sprintf(`{{ define "content" }}%s{{ end }}%s`, includeTmpl, htmlTmpl))
-	}
-	return template.New(includeFilename).Parse(fmt.Sprintf(`{{ define "content" }}%s{{ end }}%s`, includeTmpl, htmlTmpl))
-}
-
-// Page generate a template struct with Time and Page functions attach.
-func Page(filename string, tmplFuncs template.FuncMap) (*template.Template, error) {
-	src, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("Can't read template %s, %s", filename, err)
-	}
-	if len(tmplFuncs) > 0 {
-		return template.New(filename).Funcs(tmplFuncs).Parse(string(src))
-	}
-	return template.New(filename).Parse(string(src))
+	return nil, fmt.Errorf("No template names specified")
 }
