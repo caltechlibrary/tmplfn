@@ -34,7 +34,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.2`
+	Version = `v0.0.3`
 
 	// TimeMap provides a common set of time/date related functions for use in text/template or html/template
 	TimeMap = template.FuncMap{
@@ -272,4 +272,9 @@ func Assemble(tmplFuncs template.FuncMap, templateFilenames ...string) (*templat
 		return template.New(path.Base(templateFilenames[0])).Funcs(tmplFuncs).ParseFiles(templateFilenames...)
 	}
 	return nil, fmt.Errorf("No template names specified")
+}
+
+// AssembleString like Assemble but using a string as a source for the template
+func AssembleString(tmplFuncs template.FuncMap, src string) (*template.Template, error) {
+	return template.New("master").Funcs(tmplFuncs).Parse(src)
 }
