@@ -47,23 +47,23 @@ This is a codeblock below
 	}
 
 	data["data"] = `
-// This is a comment.
-if i > 1 {
-	fmt.Printf("i is %d\n", i)
-}
+# This is a comment.
+if [[ i > "1" ]]; then
+	echo "i is $i"
+fi
 
-// done!
+# done!
 `
 	expected = fmt.Sprintf(`
 This is a codeblock below
 
-%sgolang
-    // This is a comment.
-    if i > 1 {
-        fmt.Printf("i is %%d\n", i)
-    }
+%sshell
+    # This is a comment.
+    if [[ i > 1 ]]; then
+        echo "i is $i"
+    fi 
 
-    // done!
+    # done!
 %s
 `, "```", "```")
 

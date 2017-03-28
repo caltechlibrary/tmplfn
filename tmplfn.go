@@ -238,11 +238,11 @@ var (
 			if (end - start) > 0 {
 				result = append(result, fmt.Sprintf("```%s", hint))
 			}
-			for _, line := range lines[start:end] {
+			for i, line := range lines[start:end] {
 				if len(line) > 0 {
 					result = append(result, fmt.Sprintf("    %s", line))
-					//} else {
-					//		result = append(result, "")
+				} else if i > 0 && i < (end-1) {
+					result = append(result, "")
 				}
 			}
 			if len(result) > 0 {
