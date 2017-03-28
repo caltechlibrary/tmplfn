@@ -34,7 +34,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.3`
+	Version = `v0.0.5`
 
 	// TimeMap provides a common set of time/date related functions for use in text/template or html/template
 	TimeMap = template.FuncMap{
@@ -225,6 +225,30 @@ var (
 				return string(buf)
 			}
 			return ""
+		},
+		"codeblock": func(src string, start int, end int, hint string) string {
+			result := []string{}
+			lines := strings.Split(src, "\n")
+			if start < 1 {
+				start = 0
+			}
+			if end < 1 {
+				end = len(lines)
+			}
+			if (end - start) > 0 {
+				result = append(result, fmt.Sprintf("```%s", hint))
+			}
+			for _, line := range lines[start:end] {
+				if len(line) > 0 {
+					result = append(result, fmt.Sprintf("    %s", line))
+					//} else {
+					//		result = append(result, "")
+				}
+			}
+			if len(result) > 0 {
+				result = append(result, "```")
+			}
+			return strings.Join(result, "\n")
 		},
 	}
 )
