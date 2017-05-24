@@ -254,7 +254,7 @@ var (
 )
 
 // normalizeDate takes a expands years to four digits, month and day to two digits
-// E.g. 4/3/2016 becomes 04/03/2016
+// E.g. 2016-4-3 becomes 2016-04-03
 func normalizeDate(in string) string {
 	parts := strings.Split(in, "-")
 	if len(parts) == 1 {
@@ -301,4 +301,17 @@ func Assemble(tmplFuncs template.FuncMap, templateFilenames ...string) (*templat
 // AssembleString like Assemble but using a string as a source for the template
 func AssembleString(tmplFuncs template.FuncMap, src string) (*template.Template, error) {
 	return template.New("master").Funcs(tmplFuncs).Parse(src)
+}
+
+// AssembleTemplateMap takes a map of template names and source and returns a map of template names and templates
+func AssembleTemplateMap(tmplFuncs template.FuncMap, templateSrcMap map[string]string) (map[string]*template.Template, error) {
+	tmpls := map[string]*template.Template{}
+	for tName, tSrc := range templateSrcMap {
+		if tmpl, err := template.New(tName).Funcs(tmplFuncs).Parse(src); err == nil {
+			tmpls[tName] = tmpl
+		} else {
+			return nil, fmt.Errorf("%s parse error, %s", tName, err)
+		}
+	}
+	return tmpls, nil
 }
