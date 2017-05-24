@@ -307,7 +307,7 @@ func AssembleString(tmplFuncs template.FuncMap, src string) (*template.Template,
 func AssembleTemplateMap(tmplFuncs template.FuncMap, templateSrcMap map[string]string) (map[string]*template.Template, error) {
 	tmpls := map[string]*template.Template{}
 	for tName, tSrc := range templateSrcMap {
-		if tmpl, err := template.New(tName).Funcs(tmplFuncs).Parse(src); err == nil {
+		if tmpl, err := template.New(tName).Funcs(tmplFuncs).Parse(tSrc); err == nil {
 			tmpls[tName] = tmpl
 		} else {
 			return nil, fmt.Errorf("%s parse error, %s", tName, err)
