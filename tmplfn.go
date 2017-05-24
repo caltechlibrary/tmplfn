@@ -3,7 +3,7 @@
  *
  * @author R. S. Doiel
  *
- * Copyright (c) 2016, Caltech
+ * Copyright (c) 2017, Caltech
  * All rights not granted herein are expressly reserved by Caltech.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -34,7 +34,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.5`
+	Version = `v0.0.6`
 
 	// TimeMap provides a common set of time/date related functions for use in text/template or html/template
 	TimeMap = template.FuncMap{
