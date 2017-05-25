@@ -34,7 +34,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.6`
+	Version = `v0.0.7`
 
 	// TimeMap provides a common set of time/date related functions for use in text/template or html/template
 	TimeMap = template.FuncMap{
