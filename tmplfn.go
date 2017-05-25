@@ -205,6 +205,9 @@ var (
 			}
 			return strings.Join(l, sep)
 		},
+		"stringJoin": func(s []string, sep string) string {
+			return strings.Join(s, sep)
+		},
 		"synopsis": func(s string) string {
 			return doc.Synopsis(s)
 		},
