@@ -291,28 +291,28 @@ var (
 	//ConversionMap holds functions related for converting types and presentations
 	ConversionMap = template.FuncMap{
 		// Atoi converts a string to an int or returns default int.
-		"atoi": func(s string) (int, error) {
+		"atoi": func(s string, defaultInt int) int {
 			i, err := strconv.Atoi(s)
 			if err != nil {
-				return int(0), err
+				return defaultInt
 			}
-			return i, nil
+			return i
 		},
 		// jsonInt converts a JSON Number to an int
-		"jsonInt": func(n json.Number) (int, error) {
+		"jsonInt": func(n json.Number, defaultInt int) int {
 			i, err := n.Int64()
 			if err != nil {
-				return 0, err
+				return defaultInt
 			}
-			return int(i), nil
+			return int(i)
 		},
 		// jsonInt converts a JSON Number to an int64
-		"jsonInt64": func(n json.Number) (int64, error) {
+		"jsonInt64": func(n json.Number, defaultInt64 int64) int64 {
 			i, err := n.Int64()
 			if err != nil {
-				return int64(0), err
+				return defaultInt64
 			}
-			return i, err
+			return i
 		},
 	}
 )
