@@ -3,6 +3,8 @@
 
 ## Next
 
++ [ ] Documentation, examples, tutorials of using tmplfn in Go as well as the functions in text/templates
+
 ## Someday, Maybe
 
 + [ ] Review other template function systems, align with their names and parameters where it makes sense

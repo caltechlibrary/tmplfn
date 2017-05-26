@@ -30,11 +30,14 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	// Caltech Library Packages
+	"github.com/caltechlibrary/datatools/dotpath"
 )
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.8`
+	Version = `v0.0.9`
 
 	// TimeMap provides a common set of time/date related functions for use in text/template or html/template
 	TimeMap = template.FuncMap{
@@ -313,6 +316,23 @@ var (
 				return defaultInt64
 			}
 			return i
+		},
+	}
+
+	//Dotpath methods from datatools/dotpath in templates
+	DotpathMap = template.FuncMap{
+		//dotpath takes a dot path, default for fail and data returning the results of default value
+		"dotpath": func(p string, data interface{}, defaultVal interface{}) interface{} {
+			if val, err := dotpath.Eval(p, data); err == nil {
+				return val
+			}
+			return defaultVal
+		},
+		"ifDotpathExists": func(p string, data interface{}, existsVal interface{}, notExistsVal interface{}) interface{} {
+			if _, err := dotpath.Eval(p, data); err == nil {
+				return existsVal
+			}
+			return notExistsVal
 		},
 	}
 )
