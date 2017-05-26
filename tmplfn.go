@@ -205,29 +205,6 @@ var (
 			}
 			return strings.Join(l, sep)
 		},
-		// Atoi converts a string to an int or returns default int.
-		"atoi": func(s string, defaultInt int) int {
-			if i, err := strconv.Atoi(s); err == nil {
-				return i
-			}
-			return defaultInt
-		},
-		// forIntegers returns an array of ints. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
-		"forIntegers": func(start, end, inc int) []int {
-			var result []int
-			if start == end {
-				return []int{start}
-			} else if start < end {
-				for i := start; i <= end; i = i + inc {
-					result = append(result, i)
-				}
-			} else {
-				for i := end; i >= start; i = i - inc {
-					result = append(result, i)
-				}
-			}
-			return result
-		},
 		"synopsis": func(s string) string {
 			return doc.Synopsis(s)
 		},
@@ -275,21 +252,67 @@ var (
 		},
 	}
 
+	//IterationMaps produce lists that then can be applied to range function
+	IterationMap = template.FuncMap{
+		// forInt returns an array of ints. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
+		"forInt": func(start, end, inc int) []int {
+			var result []int
+			if start == end {
+				return []int{start}
+			} else if start < end {
+				for i := start; i <= end; i = i + inc {
+					result = append(result, i)
+				}
+			} else {
+				for i := end; i >= start; i = i - inc {
+					result = append(result, i)
+				}
+			}
+			return result
+		},
+		// forInt returns an array of ints. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
+		"forInt64": func(start, end, inc int64) []int64 {
+			var result []int64
+			if start == end {
+				return []int64{start}
+			} else if start < end {
+				for i := start; i <= end; i = i + inc {
+					result = append(result, i)
+				}
+			} else {
+				for i := end; i >= start; i = i - inc {
+					result = append(result, i)
+				}
+			}
+			return result
+		},
+	}
+
 	//ConversionMap holds functions related for converting types and presentations
 	ConversionMap = template.FuncMap{
-		// jsonInt converts a JSON Number to an int
-		"jsonInt": func(i json.Number, defaultInt int) int {
-			if result, err := i.Int64(); err == nil {
-				return int(result)
+		// Atoi converts a string to an int or returns default int.
+		"atoi": func(s string) (int, error) {
+			i, err := strconv.Atoi(s)
+			if err != nil {
+				return int(0), err
 			}
-			return defaultInt
+			return i, nil
+		},
+		// jsonInt converts a JSON Number to an int
+		"jsonInt": func(n json.Number) (int, error) {
+			i, err := n.Int64()
+			if err != nil {
+				return 0, err
+			}
+			return int(i), nil
 		},
 		// jsonInt converts a JSON Number to an int64
-		"jsonInt64": func(i json.Number, defaultInt int) int {
-			if result, err := i.Int64(); err == nil {
-				return result
+		"jsonInt64": func(n json.Number) (int64, error) {
+			i, err := n.Int64()
+			if err != nil {
+				return int64(0), err
 			}
-			return defaultInt
+			return i, err
 		},
 	}
 )
