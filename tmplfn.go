@@ -274,6 +274,24 @@ var (
 			return strings.Join(result, "\n")
 		},
 	}
+
+	//ConversionMap holds functions related for converting types and presentations
+	ConversionMap = template.FuncMap{
+		// jsonInt converts a JSON Number to an int
+		"jsonInt": func(i json.Number, defaultInt int) int {
+			if result, err := i.Int64(); err == nil {
+				return int(result)
+			}
+			return defaultInt
+		},
+		// jsonInt converts a JSON Number to an int64
+		"jsonInt64": func(i json.Number, defaultInt int) int {
+			if result, err := i.Int64(); err == nil {
+				return result
+			}
+			return defaultInt
+		},
+	}
 )
 
 // normalizeDate takes a expands years to four digits, month and day to two digits
