@@ -34,7 +34,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.7`
+	Version = `v0.0.8`
 
 	// TimeMap provides a common set of time/date related functions for use in text/template or html/template
 	TimeMap = template.FuncMap{
@@ -198,15 +198,35 @@ var (
 				return fmt.Sprintf("%T", tp)
 			}
 		},
-		"asList": func(li []interface{}, sep string) string {
+		"join": func(li []interface{}, sep string) string {
 			var l []string
 			for _, item := range li {
 				l = append(l, fmt.Sprintf("%s", item))
 			}
 			return strings.Join(l, sep)
 		},
-		"stringJoin": func(s []string, sep string) string {
-			return strings.Join(s, sep)
+		// Atoi converts a string to an int or returns default int.
+		"atoi": func(s string, defaultInt int) int {
+			if i, err := strconv.Atoi(s); err == nil {
+				return i
+			}
+			return defaultInt
+		},
+		// forIntegers returns an array of ints. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
+		"forIntegers": func(start, end, inc int) []int {
+			var result []int
+			if start == end {
+				return []int{start}
+			} else if start < end {
+				for i := start; i <= end; i = i + inc {
+					result = append(result, i)
+				}
+			} else {
+				for i := end; i >= start; i = i - inc {
+					result = append(result, i)
+				}
+			}
+			return result
 		},
 		"synopsis": func(s string) string {
 			return doc.Synopsis(s)
