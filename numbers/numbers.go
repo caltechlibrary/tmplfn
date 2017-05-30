@@ -1,0 +1,687 @@
+package numbers
+
+import (
+	"fmt"
+	"strconv"
+)
+
+// tmplfn supports two types of numbers, int64 and float64
+// if you store a 32 bit counter part they will be stored
+// as 64 bit versions
+
+const (
+	NaNType = iota
+	IntType
+	Int64Type
+	Float32Type
+	Float64Type
+)
+
+type Number struct {
+	Value interface{}
+	NaN   bool
+}
+
+func (n Number) Type() int {
+	switch n.Value.(type) {
+	case float64:
+		return Float64Type
+	case int64:
+		return Int64Type
+	case float32:
+		return Float32Type
+	case int:
+		return IntType
+	default:
+		return NaNType
+	}
+}
+
+// Converts a string to a signed float64 or int64
+func (n Number) stringToNumber(s string) {
+	if f, err := strconv.ParseFloat(s, 64); err == nil {
+		n.Value = f
+		return
+	}
+	if i, err := strconv.ParseInt(s, 10, 64); err == nil {
+		n.Value = i
+		return
+	}
+	n.NaN = true
+}
+
+func (n Number) float64ToNumber(f float64) {
+	n.Value = float64(f)
+}
+
+func (n Number) int64ToNumber(i int64) {
+	n.Value = int64(i)
+}
+
+// NewNumber takes a value and returns a new Number struct
+func NewNumber(v interface{}) Number {
+	n := Number{
+		Value: 0,
+		NaN:   false,
+	}
+	switch v.(type) {
+	case string:
+		n.stringToNumber(v.(string))
+	case float64:
+		n.Value = float64(v.(float64))
+	case float32:
+		n.Value = float32(v.(float32))
+	case int64:
+		n.Value = int64(v.(int64))
+	case int:
+		n.Value = int(v.(int))
+	default:
+		n.NaN = true
+	}
+	return n
+}
+
+// IsValidNumber returns true if NaN is false, true otherwise
+func (n Number) IsValidNumber() bool {
+	return (n.NaN == false)
+}
+
+// IsZero checks to see if a Number is zero
+func (n Number) IsZero() bool {
+	switch n.Value.(type) {
+	case int:
+		if n.Value == int(0) {
+			return true
+		}
+	case int64:
+		if n.Value == int64(0) {
+			return true
+		}
+	case float32:
+		if n.Value == float32(0) {
+			return true
+		}
+	case float64:
+		if n.Value == float64(0) {
+			return true
+		}
+	}
+	return false
+}
+
+func (n Number) IsInt64() bool {
+	switch n.Value.(type) {
+	case int64:
+		return true
+	default:
+		return false
+	}
+}
+
+func (n Number) IsInt() bool {
+	switch n.Value.(type) {
+	case int:
+		return true
+	default:
+		return false
+	}
+}
+
+func (n Number) IsFloat32() bool {
+	switch n.Value.(type) {
+	case float32:
+		return true
+	default:
+		return false
+	}
+}
+
+func (n Number) IsFloat64() bool {
+	switch n.Value.(type) {
+	case float64:
+		return true
+	default:
+		return false
+	}
+}
+
+// Float converts the internal representation to a Go float64
+func (n Number) Float64() float64 {
+	switch n.Value.(type) {
+	case float64:
+		return n.Value.(float64)
+	case int64:
+		return float64(n.Value.(int64))
+	case int:
+		return float64(n.Value.(int))
+	case float32:
+		return float64(n.Value.(float64))
+	default:
+		return float64(0.0)
+	}
+}
+
+// Float converts the internal representation to a Go float64
+func (n Number) Float32() float32 {
+	switch n.Value.(type) {
+	case float64:
+		return float32(n.Value.(float64))
+	case int64:
+		return float32(n.Value.(int64))
+	case int:
+		return float32(n.Value.(int))
+	case float32:
+		return n.Value.(float32)
+	default:
+		return float32(0.0)
+	}
+}
+
+// Int64 converts the internal representation to a Go int64
+func (n Number) Int64() int64 {
+	switch n.Value.(type) {
+	case int64:
+		return n.Value.(int64)
+	case int:
+		return int64(n.Value.(int64))
+	case float32:
+		return int64(n.Value.(float32))
+	case float64:
+		return int64(n.Value.(float64))
+	default:
+		return int64(0)
+	}
+}
+
+// Int convert the internal representation to a Go int
+func (n Number) Int() int {
+	switch n.Value.(type) {
+	case int64:
+		return int(n.Value.(int64))
+	case int:
+		return n.Value.(int)
+	case float64:
+		return int(n.Value.(float64))
+	case float32:
+		return int(n.Value.(float32))
+	default:
+		return int(0)
+	}
+}
+
+// String converts n to its string presentation
+func (n Number) String() string {
+	if n.NaN == true {
+		return "NaN"
+	}
+	switch n.Value.(type) {
+	case int64:
+		return fmt.Sprintf("%d", n.Value)
+	case int:
+		return fmt.Sprintf("%d", n.Value)
+	case float64:
+		return fmt.Sprintf("%g", n.Value)
+	case float32:
+		return fmt.Sprintf("%g", n.Value)
+	default:
+		return "NaN"
+	}
+}
+
+func Add(a, b Number) Number {
+	aType := a.Type()
+	bType := b.Type()
+
+	switch {
+	// Types match
+	case aType == Float64Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(float64) + b.Value.(float64)),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(float32) + b.Value.(float32)),
+			NaN:   false,
+		}
+
+	case aType == Int64Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int64) + b.Value.(int64)),
+			NaN:   false,
+		}
+	case aType == IntType && bType == IntType:
+		return Number{
+			Value: (a.Value.(int) + b.Value.(int)),
+			NaN:   false,
+		}
+	// Permutations float64 plus other types
+	case aType == Float64Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(float64) + float64(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == Float64Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(float64) + float64(b.Value.(int64))),
+			NaN:   false,
+		}
+	case aType == Float64Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(float64) + float64(b.Value.(int))),
+			NaN:   false,
+		}
+	// Permutations float32 plus other types
+	case aType == Float32Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(float32) + float32(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(float32) + float32(b.Value.(int64))),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(float32) + float32(b.Value.(int))),
+			NaN:   false,
+		}
+	// Permutations Int64 plus other types
+	case aType == Int64Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int64) + int64(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int64) + int64(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(int64) + int64(b.Value.(int))),
+			NaN:   false,
+		}
+		// Permutatins Int plus other types
+	case aType == IntType && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int) + int(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int) + int(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int) + int(b.Value.(int64))),
+			NaN:   false,
+		}
+	default:
+		return Number{
+			Value: 0,
+			NaN:   true,
+		}
+	}
+}
+
+func Subtract(a, b Number) Number {
+	aType := a.Type()
+	bType := b.Type()
+
+	switch {
+	// Types match
+	case aType == Float64Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(float64) - b.Value.(float64)),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(float32) - b.Value.(float32)),
+			NaN:   false,
+		}
+
+	case aType == Int64Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int64) - b.Value.(int64)),
+			NaN:   false,
+		}
+	case aType == IntType && bType == IntType:
+		return Number{
+			Value: (a.Value.(int) - b.Value.(int)),
+			NaN:   false,
+		}
+	// Permutations float64 plus other types
+	case aType == Float64Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(float64) - float64(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == Float64Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(float64) - float64(b.Value.(int64))),
+			NaN:   false,
+		}
+	case aType == Float64Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(float64) - float64(b.Value.(int))),
+			NaN:   false,
+		}
+	// Permutations float32 plus other types
+	case aType == Float32Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(float32) - float32(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(float32) - float32(b.Value.(int64))),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(float32) - float32(b.Value.(int))),
+			NaN:   false,
+		}
+	// Permutations Int64 plus other types
+	case aType == Int64Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int64) - int64(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int64) - int64(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(int64) - int64(b.Value.(int))),
+			NaN:   false,
+		}
+		// Permutatins Int plus other types
+	case aType == IntType && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int) - int(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int) - int(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int) - int(b.Value.(int64))),
+			NaN:   false,
+		}
+	default:
+		return Number{
+			Value: 0,
+			NaN:   true,
+		}
+	}
+}
+
+func Multiply(a, b Number) Number {
+	aType := a.Type()
+	bType := b.Type()
+
+	switch {
+	// Types match
+	case aType == Float64Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(float64) * b.Value.(float64)),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(float32) * b.Value.(float32)),
+			NaN:   false,
+		}
+
+	case aType == Int64Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int64) * b.Value.(int64)),
+			NaN:   false,
+		}
+	case aType == IntType && bType == IntType:
+		return Number{
+			Value: (a.Value.(int) * b.Value.(int)),
+			NaN:   false,
+		}
+	// Permutations float64 plus other types
+	case aType == Float64Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(float64) * float64(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == Float64Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(float64) * float64(b.Value.(int64))),
+			NaN:   false,
+		}
+	case aType == Float64Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(float64) * float64(b.Value.(int))),
+			NaN:   false,
+		}
+	// Permutations float32 plus other types
+	case aType == Float32Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(float32) * float32(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(float32) * float32(b.Value.(int64))),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(float32) * float32(b.Value.(int))),
+			NaN:   false,
+		}
+	// Permutations Int64 plus other types
+	case aType == Int64Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int64) * int64(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int64) * int64(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(int64) * int64(b.Value.(int))),
+			NaN:   false,
+		}
+		// Permutatins Int plus other types
+	case aType == IntType && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int) * int(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int) * int(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int) * int(b.Value.(int64))),
+			NaN:   false,
+		}
+	default:
+		return Number{
+			Value: 0,
+			NaN:   true,
+		}
+	}
+}
+
+func Divide(a, b Number) Number {
+	if b.IsZero() == true {
+		return Number{
+			Value: int64(0),
+			NaN:   true,
+		}
+	}
+	aType := a.Type()
+	bType := b.Type()
+
+	switch {
+	// Types match
+	case aType == Float64Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(float64) / b.Value.(float64)),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(float32) / b.Value.(float32)),
+			NaN:   false,
+		}
+
+	case aType == Int64Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int64) / b.Value.(int64)),
+			NaN:   false,
+		}
+	case aType == IntType && bType == IntType:
+		return Number{
+			Value: (a.Value.(int) / b.Value.(int)),
+			NaN:   false,
+		}
+	// Permutations float64 plus other types
+	case aType == Float64Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(float64) / float64(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == Float64Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(float64) / float64(b.Value.(int64))),
+			NaN:   false,
+		}
+	case aType == Float64Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(float64) / float64(b.Value.(int))),
+			NaN:   false,
+		}
+	// Permutations float32 plus other types
+	case aType == Float32Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(float32) / float32(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(float32) / float32(b.Value.(int64))),
+			NaN:   false,
+		}
+	case aType == Float32Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(float32) / float32(b.Value.(int))),
+			NaN:   false,
+		}
+	// Permutations Int64 plus other types
+	case aType == Int64Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int64) / int64(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int64) / int64(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(int64) / int64(b.Value.(int))),
+			NaN:   false,
+		}
+		// Permutatins Int plus other types
+	case aType == IntType && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int) / int(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int) / int(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int) / int(b.Value.(int64))),
+			NaN:   false,
+		}
+	default:
+		return Number{
+			Value: 0,
+			NaN:   true,
+		}
+	}
+}
+
+func Modulo(a, b Number) Number {
+	aType := a.Type()
+	bType := b.Type()
+
+	switch {
+	// Types match
+	case aType == Int64Type && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int64) % b.Value.(int64)),
+			NaN:   false,
+		}
+	case aType == IntType && bType == IntType:
+		return Number{
+			Value: (a.Value.(int) % b.Value.(int)),
+			NaN:   false,
+		}
+	// Permutations Int64 plus other types
+	case aType == Int64Type && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int64) % int64(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int64) % int64(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == Int64Type && bType == IntType:
+		return Number{
+			Value: (a.Value.(int64) % int64(b.Value.(int))),
+			NaN:   false,
+		}
+		// Permutatins Int plus other types
+	case aType == IntType && bType == Float64Type:
+		return Number{
+			Value: (a.Value.(int) % int(b.Value.(float64))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Float32Type:
+		return Number{
+			Value: (a.Value.(int) % int(b.Value.(float32))),
+			NaN:   false,
+		}
+	case aType == IntType && bType == Int64Type:
+		return Number{
+			Value: (a.Value.(int) % int(b.Value.(int64))),
+			NaN:   false,
+		}
+	default:
+		return Number{
+			Value: 0,
+			NaN:   true,
+		}
+	}
+}

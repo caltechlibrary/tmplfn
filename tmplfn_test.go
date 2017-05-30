@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"text/template"
 )
@@ -28,7 +29,7 @@ This is a codeblock below
 %s
 `, "```", "```")
 
-	fMap := Join(TimeMap, PageMap)
+	fMap := Join(Time, Page)
 	tmpl, err := AssembleString(fMap, tSrc)
 	if err != nil {
 		t.Errorf("%s", err)
@@ -41,15 +42,15 @@ This is a codeblock below
 		t.FailNow()
 	}
 	result := fmt.Sprintf("%s", buf)
-	if result != expected {
-		t.Errorf("codeblock expected:\n\n%s\n\ngot:\n\n%s\n", expected, buf)
+	if strings.Compare(expected, result) != 0 {
+		t.Errorf("codeblock expected:\n\n%q\n\ngot:\n\n%q\n", expected, result)
 		t.FailNow()
 	}
 
 	data["data"] = `
 # This is a comment.
-if [[ i > "1" ]]; then
-	echo "i is $i"
+if [[ i > 1 ]]; then
+    echo "i is $i"
 fi
 
 # done!
@@ -61,7 +62,7 @@ This is a codeblock below
     # This is a comment.
     if [[ i > 1 ]]; then
         echo "i is $i"
-    fi 
+    fi
 
     # done!
 %s
@@ -75,8 +76,11 @@ This is a codeblock below
 	}
 
 	result = fmt.Sprintf("%s", buf)
-	if result != expected {
-		t.Errorf("codeblock expected:\n\n%s\n\ngot:\n\n%s\n", expected, buf)
+	if len(result) != len(expected) {
+		t.Errorf("codeblock expected len: %d, got %d\n", len(expected), len(result))
+	}
+	if strings.Compare(expected, result) != 0 {
+		t.Errorf("codeblock expected:\n\n%q\n\ngot:\n\n%q\n", expected, result)
 		t.FailNow()
 	}
 
@@ -89,7 +93,7 @@ func TestJoin(t *testing.T) {
 		},
 	}
 
-	m2 := Join(m1, TimeMap, PageMap)
+	m2 := Join(m1, Time, Page)
 	for _, key := range []string{"year", "helloworld", "nl2p"} {
 		if _, OK := m2[key]; OK != true {
 			t.Errorf("Can't find %s in m2", key)
@@ -109,7 +113,8 @@ func TestRender(t *testing.T) {
 
 	tSrc := `Title: {{ .title }}`
 
-	fMap := Join(TimeMap, PageMap)
+	fMap := Join(Time, Page, Math, Types, Strings, Iterations, Conversions, Dotpath)
+
 	tmpl, err := AssembleString(fMap, tSrc)
 	if err != nil {
 		t.Errorf("%s", err)

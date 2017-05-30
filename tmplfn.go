@@ -33,14 +33,15 @@ import (
 
 	// Caltech Library Packages
 	"github.com/caltechlibrary/datatools/dotpath"
+	"github.com/caltechlibrary/tmplfn/numbers"
 )
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.9`
+	Version = `v0.0.10`
 
-	// TimeMap provides a common set of time/date related functions for use in text/template or html/template
-	TimeMap = template.FuncMap{
+	// Time provides a common set of time/date related functions for use in text/template or html/template
+	Time = template.FuncMap{
 		"year": func(s string) string {
 			var (
 				dt  time.Time
@@ -159,27 +160,51 @@ var (
 		},
 	}
 
-	PageMap = template.FuncMap{
-		"nl2p": func(s string) string {
-			return strings.Replace(strings.Replace(s, "\n\n", "<p>", -1), "\n", "<br />", -1)
+	Math = template.FuncMap{
+		"add": numbers.Add,
+		"sub": numbers.Subtract,
+	}
+
+	Types = template.FuncMap{
+		"getType": func(t interface{}) string {
+			switch tp := t.(type) {
+			default:
+				return fmt.Sprintf("%T", tp)
+			}
+		},
+		"arraySize": func(a []interface{}) int {
+			return len(a)
+		},
+		"mapSize": func(m map[string]interface{}) int {
+			return len(m)
+		},
+	}
+
+	Strings = template.FuncMap{
+		"hasPrefix": func(s, substring string) bool {
+			return strings.HasPrefix(s, substring)
 		},
 		"contains": func(s, substring string) bool {
 			return strings.Contains(s, substring)
 		},
+		"hasSuffix": func(s, substring string) bool {
+			return strings.HasSuffix(s, substring)
+		},
 		"title": func(s string) string {
 			return strings.Title(s)
 		},
-		"add": func(a, b int) int {
-			return a + b
+		"join": func(li []interface{}, sep string) string {
+			var l []string
+			for _, item := range li {
+				l = append(l, fmt.Sprintf("%s", item))
+			}
+			return strings.Join(l, sep)
 		},
-		"sub": func(a, b int) int {
-			return a - b
-		},
-		"arraylength": func(a []string) int {
-			return len(a)
-		},
-		"mapsize": func(m map[string]string) int {
-			return len(m)
+	}
+
+	Page = template.FuncMap{
+		"nl2p": func(s string) string {
+			return strings.Replace(strings.Replace(s, "\n\n", "<p>", -1), "\n", "<br />", -1)
 		},
 		"prevPage": func(from, size, max int) int {
 			next := from - size
@@ -194,19 +219,6 @@ var (
 				return from
 			}
 			return next
-		},
-		"getType": func(t interface{}) string {
-			switch tp := t.(type) {
-			default:
-				return fmt.Sprintf("%T", tp)
-			}
-		},
-		"join": func(li []interface{}, sep string) string {
-			var l []string
-			for _, item := range li {
-				l = append(l, fmt.Sprintf("%s", item))
-			}
-			return strings.Join(l, sep)
 		},
 		"synopsis": func(s string) string {
 			return doc.Synopsis(s)
@@ -255,8 +267,8 @@ var (
 		},
 	}
 
-	//IterationMaps produce lists that then can be applied to range function
-	IterationMap = template.FuncMap{
+	//Iterations produce lists that then can be applied to range function
+	Iterations = template.FuncMap{
 		// forInt returns an array of ints. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
 		"forInt": func(start, end, inc int) []int {
 			var result []int
@@ -291,8 +303,8 @@ var (
 		},
 	}
 
-	//ConversionMap holds functions related for converting types and presentations
-	ConversionMap = template.FuncMap{
+	//Conversions holds functions related for converting types and presentations
+	Conversions = template.FuncMap{
 		// Atoi converts a string to an int or returns default int.
 		"atoi": func(s string, defaultInt int) int {
 			i, err := strconv.Atoi(s)
@@ -317,10 +329,14 @@ var (
 			}
 			return i
 		},
+		// toInt converts a numbers.Number to an integer
+		"toInt": func(n numbers.Number) int {
+			return n.Int()
+		},
 	}
 
 	//Dotpath methods from datatools/dotpath in templates
-	DotpathMap = template.FuncMap{
+	Dotpath = template.FuncMap{
 		//dotpath takes a dot path, default for fail and data returning the results of default value
 		"dotpath": func(p string, data interface{}, defaultVal interface{}) interface{} {
 			if val, err := dotpath.Eval(p, data); err == nil {
