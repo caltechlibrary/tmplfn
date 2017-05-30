@@ -161,12 +161,91 @@ var (
 	}
 
 	Math = template.FuncMap{
-		"asNumber": numbers.NewNumber,
-		"add":      numbers.Add,
-		"sub":      numbers.Subtract,
-		"mult":     numbers.Multiply,
-		"div":      numbers.Divide,
-		"mod":      numbers.Modulo,
+		"int": func(v interface{}) int {
+			switch v.(type) {
+			case int:
+				return v.(int)
+			case int64:
+				return v.(int)
+			case float32:
+				return int(v.(float32))
+			case float64:
+				return int(v.(float64))
+			case json.Number:
+				return numbers.NewNumber(v).Int()
+			case numbers.Number:
+				v.(numbers.Number).Int()
+			}
+			return numbers.NewNumber(v).Int()
+		},
+		"int64": func(v interface{}) int64 {
+			switch v.(type) {
+			case int:
+				return int64(v.(int))
+			case int64:
+				return v.(int64)
+			case float32:
+				return int64(v.(float32))
+			case float64:
+				return int64(v.(float64))
+			case json.Number:
+				return numbers.NewNumber(v).Int64()
+			case numbers.Number:
+				return v.(numbers.Number).Int64()
+			}
+			return numbers.NewNumber(v).Int64()
+		},
+		"float32": func(v interface{}) float32 {
+			switch v.(type) {
+			case int:
+				return float32(v.(int))
+			case int64:
+				return float32(v.(int64))
+			case float32:
+				return v.(float32)
+			case float64:
+				return float32(v.(float64))
+			case json.Number:
+				return numbers.NewNumber(v).Float32()
+			case numbers.Number:
+				return v.(numbers.Number).Float32()
+			}
+			return numbers.NewNumber(v).Float32()
+		},
+		"float64": func(v interface{}) float64 {
+			switch v.(type) {
+			case int:
+				return float64(v.(int))
+			case int64:
+				return float64(v.(int64))
+			case float32:
+				return float64(v.(float32))
+			case float64:
+				return v.(float64)
+			case json.Number:
+				return numbers.NewNumber(v).Float64()
+			case numbers.Number:
+				return v.(numbers.Number).Float64()
+			}
+			return numbers.NewNumber(v).Float64()
+		},
+		"number": func(v interface{}) numbers.Number {
+			switch v.(type) {
+			case json.Number:
+				return numbers.NewNumber(v.(string))
+			case numbers.Number:
+				return v.(numbers.Number)
+			}
+			return numbers.NewNumber(v)
+		},
+		"add":       numbers.Add,
+		"sub":       numbers.Subtract,
+		"multiply":  numbers.Multiply,
+		"divide":    numbers.Divide,
+		"modulo":    numbers.Modulo,
+		"isGreater": numbers.IsGreater,
+		"isLess":    numbers.IsLess,
+		"isEqual":   numbers.IsEqual,
 	}
 
 	Types = template.FuncMap{
@@ -316,26 +395,6 @@ var (
 				return defaultInt
 			}
 			return i
-		},
-		// jsonInt converts a JSON Number to an int
-		"jsonInt": func(n json.Number, defaultInt int) int {
-			i, err := n.Int64()
-			if err != nil {
-				return defaultInt
-			}
-			return int(i)
-		},
-		// jsonInt converts a JSON Number to an int64
-		"jsonInt64": func(n json.Number, defaultInt64 int64) int64 {
-			i, err := n.Int64()
-			if err != nil {
-				return defaultInt64
-			}
-			return i
-		},
-		// toInt converts a numbers.Number to an integer
-		"toInt": func(n numbers.Number) int {
-			return n.Int()
 		},
 	}
 

@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 	"text/template"
+
+	// Caltech Library packages
+	"github.com/caltechlibrary/tmplfn/numbers"
 )
 
 func TestCodeBlock(t *testing.T) {
@@ -131,5 +135,22 @@ func TestRender(t *testing.T) {
 	if s != expected {
 		t.Errorf("expected %q, got %q", expected, s)
 		t.FailNow()
+	}
+}
+
+func TestMath(t *testing.T) {
+	tMap := map[string]interface{}{
+		"1": 1,
+		"2": 1.0,
+		"3": numbers.Number{Value: 3.0, NaN: false},
+		"4": json.Number("4.0"),
+	}
+	for k, v := range tMap {
+		expected, _ := strconv.Atoi(k)
+		fn := Math["int"].(func(interface{}) int)
+		result := fn(v)
+		if expected != result {
+			t.Errorf("expected %d, got %+v", expected, result)
+		}
 	}
 }

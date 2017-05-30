@@ -39,6 +39,23 @@ func (n Number) Type() int {
 	}
 }
 
+func asNumbers(v1, v2 interface{}) (Number, Number) {
+	var a, b Number
+	switch v1.(type) {
+	case Number:
+		a = v1.(Number)
+	default:
+		a = NewNumber(v1)
+	}
+	switch v2.(type) {
+	case Number:
+		b = v2.(Number)
+	default:
+		b = NewNumber(v2)
+	}
+	return a, b
+}
+
 // Converts a string to a signed float64 or int64
 func (n Number) stringToNumber(s string) {
 	if f, err := strconv.ParseFloat(s, 64); err == nil {
@@ -151,6 +168,9 @@ func (n Number) IsFloat64() bool {
 
 // Float converts the internal representation to a Go float64
 func (n Number) Float64() float64 {
+	if n.NaN == true {
+		return float64(0.0)
+	}
 	switch n.Value.(type) {
 	case float64:
 		return n.Value.(float64)
@@ -167,6 +187,9 @@ func (n Number) Float64() float64 {
 
 // Float converts the internal representation to a Go float64
 func (n Number) Float32() float32 {
+	if n.NaN == true {
+		return float32(0.0)
+	}
 	switch n.Value.(type) {
 	case float64:
 		return float32(n.Value.(float64))
@@ -183,6 +206,9 @@ func (n Number) Float32() float32 {
 
 // Int64 converts the internal representation to a Go int64
 func (n Number) Int64() int64 {
+	if n.NaN == true {
+		return int64(0)
+	}
 	switch n.Value.(type) {
 	case int64:
 		return n.Value.(int64)
@@ -199,6 +225,9 @@ func (n Number) Int64() int64 {
 
 // Int convert the internal representation to a Go int
 func (n Number) Int() int {
+	if n.NaN == true {
+		return 0
+	}
 	switch n.Value.(type) {
 	case int64:
 		return int(n.Value.(int64))
@@ -236,6 +265,9 @@ func IsGreater(a, b Number) bool {
 	if a.NaN == true || b.NaN == true {
 		return false
 	}
+	aType := a.Type()
+	bType := b.Type()
+
 	switch {
 	// Types match
 	case aType == Float64Type && bType == Float64Type:
@@ -280,10 +312,14 @@ func IsGreater(a, b Number) bool {
 	}
 }
 
-func IsLess(a, b Number) bool {
+func IsLess(v1, v2 interface{}) bool {
+	a, b := asNumbers(v1, v2)
 	if a.NaN == true || b.NaN == true {
 		return false
 	}
+	aType := a.Type()
+	bType := b.Type()
+
 	switch {
 	// Types match
 	case aType == Float64Type && bType == Float64Type:
@@ -328,10 +364,14 @@ func IsLess(a, b Number) bool {
 	}
 }
 
-func IsEqual(a, b Number) bool {
+func IsEqual(v1, v2 interface{}) bool {
+	a, b := asNumbers(v1, v2)
 	if a.NaN == true || b.NaN == true {
 		return false
 	}
+	aType := a.Type()
+	bType := b.Type()
+
 	switch {
 	// Types match
 	case aType == Float64Type && bType == Float64Type:
@@ -376,7 +416,8 @@ func IsEqual(a, b Number) bool {
 	}
 }
 
-func Add(a, b Number) Number {
+func Add(v1, v2 interface{}) Number {
+	a, b := asNumbers(v1, v2)
 	aType := a.Type()
 	bType := b.Type()
 
@@ -475,7 +516,8 @@ func Add(a, b Number) Number {
 	}
 }
 
-func Subtract(a, b Number) Number {
+func Subtract(v1, v2 interface{}) Number {
+	a, b := asNumbers(v1, v2)
 	aType := a.Type()
 	bType := b.Type()
 
@@ -574,7 +616,8 @@ func Subtract(a, b Number) Number {
 	}
 }
 
-func Multiply(a, b Number) Number {
+func Multiply(v1, v2 interface{}) Number {
+	a, b := asNumbers(v1, v2)
 	aType := a.Type()
 	bType := b.Type()
 
@@ -673,7 +716,8 @@ func Multiply(a, b Number) Number {
 	}
 }
 
-func Divide(a, b Number) Number {
+func Divide(v1, v2 Number) Number {
+	a, b := asNumbers(v1, v2)
 	if b.IsZero() == true {
 		return Number{
 			Value: int64(0),
@@ -778,7 +822,8 @@ func Divide(a, b Number) Number {
 	}
 }
 
-func Modulo(a, b Number) Number {
+func Modulo(v1, v2 interface{}) Number {
+	a, b := asNumbers(v1, v2)
 	aType := a.Type()
 	bType := b.Type()
 
