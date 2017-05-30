@@ -1,6 +1,7 @@
 package numbers
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 )
@@ -15,6 +16,7 @@ const (
 	Int64Type
 	Float32Type
 	Float64Type
+	JSONNumberType
 )
 
 type Number struct {
@@ -65,6 +67,8 @@ func NewNumber(v interface{}) Number {
 		NaN:   false,
 	}
 	switch v.(type) {
+	case json.Number:
+		n.stringToNumber(string(v.(json.Number)))
 	case string:
 		n.stringToNumber(v.(string))
 	case float64:
@@ -225,6 +229,150 @@ func (n Number) String() string {
 		return fmt.Sprintf("%g", n.Value)
 	default:
 		return "NaN"
+	}
+}
+
+func IsGreater(a, b Number) bool {
+	if a.NaN == true || b.NaN == true {
+		return false
+	}
+	switch {
+	// Types match
+	case aType == Float64Type && bType == Float64Type:
+		return (a.Value.(float64) > b.Value.(float64))
+	case aType == Float32Type && bType == Float32Type:
+		return (a.Value.(float32) > b.Value.(float32))
+	case aType == Int64Type && bType == Int64Type:
+		return (a.Value.(int64) > b.Value.(int64))
+	case aType == IntType && bType == IntType:
+		return (a.Value.(int) > b.Value.(int))
+	// Permutations float64 plus other types
+	case aType == Float64Type && bType == Float32Type:
+		return (a.Value.(float64) > float64(b.Value.(float32)))
+	case aType == Float64Type && bType == Int64Type:
+		return (a.Value.(float64) > float64(b.Value.(int64)))
+	case aType == Float64Type && bType == IntType:
+		return (a.Value.(float64) > float64(b.Value.(int)))
+	// Permutations float32 plus other types
+	case aType == Float32Type && bType == Float64Type:
+		return (a.Value.(float32) > float32(b.Value.(float64)))
+	case aType == Float32Type && bType == Int64Type:
+		return (a.Value.(float32) > float32(b.Value.(int64)))
+	case aType == Float32Type && bType == IntType:
+		return (a.Value.(float32) > float32(b.Value.(int)))
+	// Permutations Int64 plus other types
+	case aType == Int64Type && bType == Float64Type:
+		return (a.Value.(int64) > int64(b.Value.(float64)))
+	case aType == Int64Type && bType == Float32Type:
+		return (a.Value.(int64) > int64(b.Value.(float32)))
+	case aType == Int64Type && bType == IntType:
+		return (a.Value.(int64) > int64(b.Value.(int)))
+		// Permutatins Int plus other types
+	case aType == IntType && bType == Float64Type:
+		return (a.Value.(int) > int(b.Value.(float64)))
+	case aType == IntType && bType == Float32Type:
+		return (a.Value.(int) > int(b.Value.(float32)))
+	case aType == IntType && bType == Int64Type:
+		return (a.Value.(int) > int(b.Value.(int64)))
+	default:
+		// NOTE: if not a number then return false
+		return false
+	}
+}
+
+func IsLess(a, b Number) bool {
+	if a.NaN == true || b.NaN == true {
+		return false
+	}
+	switch {
+	// Types match
+	case aType == Float64Type && bType == Float64Type:
+		return (a.Value.(float64) < b.Value.(float64))
+	case aType == Float32Type && bType == Float32Type:
+		return (a.Value.(float32) < b.Value.(float32))
+	case aType == Int64Type && bType == Int64Type:
+		return (a.Value.(int64) < b.Value.(int64))
+	case aType == IntType && bType == IntType:
+		return (a.Value.(int) < b.Value.(int))
+	// Permutations float64 plus other types
+	case aType == Float64Type && bType == Float32Type:
+		return (a.Value.(float64) < float64(b.Value.(float32)))
+	case aType == Float64Type && bType == Int64Type:
+		return (a.Value.(float64) < float64(b.Value.(int64)))
+	case aType == Float64Type && bType == IntType:
+		return (a.Value.(float64) < float64(b.Value.(int)))
+	// Permutations float32 plus other types
+	case aType == Float32Type && bType == Float64Type:
+		return (a.Value.(float32) < float32(b.Value.(float64)))
+	case aType == Float32Type && bType == Int64Type:
+		return (a.Value.(float32) < float32(b.Value.(int64)))
+	case aType == Float32Type && bType == IntType:
+		return (a.Value.(float32) < float32(b.Value.(int)))
+	// Permutations Int64 plus other types
+	case aType == Int64Type && bType == Float64Type:
+		return (a.Value.(int64) < int64(b.Value.(float64)))
+	case aType == Int64Type && bType == Float32Type:
+		return (a.Value.(int64) < int64(b.Value.(float32)))
+	case aType == Int64Type && bType == IntType:
+		return (a.Value.(int64) < int64(b.Value.(int)))
+		// Permutatins Int plus other types
+	case aType == IntType && bType == Float64Type:
+		return (a.Value.(int) < int(b.Value.(float64)))
+	case aType == IntType && bType == Float32Type:
+		return (a.Value.(int) < int(b.Value.(float32)))
+	case aType == IntType && bType == Int64Type:
+		return (a.Value.(int) < int(b.Value.(int64)))
+	default:
+		// NOTE: if not a number then return false
+		return false
+	}
+}
+
+func IsEqual(a, b Number) bool {
+	if a.NaN == true || b.NaN == true {
+		return false
+	}
+	switch {
+	// Types match
+	case aType == Float64Type && bType == Float64Type:
+		return (a.Value.(float64) == b.Value.(float64))
+	case aType == Float32Type && bType == Float32Type:
+		return (a.Value.(float32) == b.Value.(float32))
+	case aType == Int64Type && bType == Int64Type:
+		return (a.Value.(int64) == b.Value.(int64))
+	case aType == IntType && bType == IntType:
+		return (a.Value.(int) == b.Value.(int))
+	// Permutations float64 plus other types
+	case aType == Float64Type && bType == Float32Type:
+		return (a.Value.(float64) == float64(b.Value.(float32)))
+	case aType == Float64Type && bType == Int64Type:
+		return (a.Value.(float64) == float64(b.Value.(int64)))
+	case aType == Float64Type && bType == IntType:
+		return (a.Value.(float64) == float64(b.Value.(int)))
+	// Permutations float32 plus other types
+	case aType == Float32Type && bType == Float64Type:
+		return (a.Value.(float32) == float32(b.Value.(float64)))
+	case aType == Float32Type && bType == Int64Type:
+		return (a.Value.(float32) == float32(b.Value.(int64)))
+	case aType == Float32Type && bType == IntType:
+		return (a.Value.(float32) == float32(b.Value.(int)))
+	// Permutations Int64 plus other types
+	case aType == Int64Type && bType == Float64Type:
+		return (a.Value.(int64) == int64(b.Value.(float64)))
+	case aType == Int64Type && bType == Float32Type:
+		return (a.Value.(int64) == int64(b.Value.(float32)))
+	case aType == Int64Type && bType == IntType:
+		return (a.Value.(int64) == int64(b.Value.(int)))
+		// Permutatins Int plus other types
+	case aType == IntType && bType == Float64Type:
+		return (a.Value.(int) == int(b.Value.(float64)))
+	case aType == IntType && bType == Float32Type:
+		return (a.Value.(int) == int(b.Value.(float32)))
+	case aType == IntType && bType == Int64Type:
+		return (a.Value.(int) == int(b.Value.(int64)))
+	default:
+		// NOTE: if not a number then return false
+		return false
 	}
 }
 

@@ -161,8 +161,12 @@ var (
 	}
 
 	Math = template.FuncMap{
-		"add": numbers.Add,
-		"sub": numbers.Subtract,
+		"asNumber": numbers.NewNumber,
+		"add":      numbers.Add,
+		"sub":      numbers.Subtract,
+		"mult":     numbers.Multiply,
+		"div":      numbers.Divide,
+		"mod":      numbers.Modulo,
 	}
 
 	Types = template.FuncMap{
