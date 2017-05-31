@@ -161,105 +161,22 @@ var (
 	}
 
 	Math = template.FuncMap{
-		"int": func(v interface{}) int {
-			switch v.(type) {
-			case int:
-				return v.(int)
-			case int64:
-				return v.(int)
-			case float32:
-				return int(v.(float32))
-			case float64:
-				return int(v.(float64))
-			case json.Number:
-				return numbers.NewNumber(v).Int()
-			case numbers.Number:
-				v.(numbers.Number).Int()
-			}
-			return numbers.NewNumber(v).Int()
-		},
-		"int64": func(v interface{}) int64 {
-			switch v.(type) {
-			case int:
-				return int64(v.(int))
-			case int64:
-				return v.(int64)
-			case float32:
-				return int64(v.(float32))
-			case float64:
-				return int64(v.(float64))
-			case json.Number:
-				return numbers.NewNumber(v).Int64()
-			case numbers.Number:
-				return v.(numbers.Number).Int64()
-			}
-			return numbers.NewNumber(v).Int64()
-		},
-		"float32": func(v interface{}) float32 {
-			switch v.(type) {
-			case int:
-				return float32(v.(int))
-			case int64:
-				return float32(v.(int64))
-			case float32:
-				return v.(float32)
-			case float64:
-				return float32(v.(float64))
-			case json.Number:
-				return numbers.NewNumber(v).Float32()
-			case numbers.Number:
-				return v.(numbers.Number).Float32()
-			}
-			return numbers.NewNumber(v).Float32()
-		},
-		"float64": func(v interface{}) float64 {
-			switch v.(type) {
-			case int:
-				return float64(v.(int))
-			case int64:
-				return float64(v.(int64))
-			case float32:
-				return float64(v.(float32))
-			case float64:
-				return v.(float64)
-			case json.Number:
-				return numbers.NewNumber(v).Float64()
-			case numbers.Number:
-				return v.(numbers.Number).Float64()
-			}
-			return numbers.NewNumber(v).Float64()
-		},
-		"number": func(v interface{}) numbers.Number {
-			switch v.(type) {
-			case json.Number:
-				return numbers.NewNumber(v.(string))
-			case numbers.Number:
-				return v.(numbers.Number)
-			}
-			return numbers.NewNumber(v)
-		},
-		"add":       numbers.Add,
-		"sub":       numbers.Subtract,
-		"multiply":  numbers.Multiply,
-		"divide":    numbers.Divide,
-		"modulo":    numbers.Modulo,
-		"isGreater": numbers.IsGreater,
-		"isLess":    numbers.IsLess,
-		"isEqual":   numbers.IsEqual,
-	}
-
-	Types = template.FuncMap{
+		"int":      numbers.Int,
+		"int64":    numbers.Int64,
+		"float32":  numbers.Float32,
+		"float64":  numbers.Float64,
+		"add":      numbers.Add,
+		"sub":      numbers.Subtract,
+		"multiply": numbers.Multiply,
+		"divide":   numbers.Divide,
+		"modulo":   numbers.Modulo,
+		"addi":     numbers.Addi,
+		"subi":     numbers.Subtract,
 		"getType": func(t interface{}) string {
 			switch tp := t.(type) {
 			default:
 				return fmt.Sprintf("%T", tp)
 			}
-		},
-		"arraySize": func(a []interface{}) int {
-			return len(a)
-		},
-		"mapSize": func(m map[string]interface{}) int {
-			return len(m)
 		},
 	}
 
@@ -289,17 +206,23 @@ var (
 		"nl2p": func(s string) string {
 			return strings.Replace(strings.Replace(s, "\n\n", "<p>", -1), "\n", "<br />", -1)
 		},
-		"prevPage": func(from, size, max int) int {
-			next := from - size
-			if next < 0 {
-				return 0
+		"prevI": func(from, size, min, max int, wrap bool) int {
+			prev := from - size
+			if prev < min {
+				if wrap == false {
+					return min
+				}
+				return max
 			}
-			return next
+			return prev
 		},
-		"nextPage": func(from, size, max int) int {
+		"nextI": func(from, size, min, max int, wrap bool) int {
 			next := from + size
 			if next > max {
-				return from
+				if wrap == false {
+					return from
+				}
+				return min
 			}
 			return next
 		},
@@ -386,18 +309,6 @@ var (
 		},
 	}
 
-	//Conversions holds functions related for converting types and presentations
-	Conversions = template.FuncMap{
-		// Atoi converts a string to an int or returns default int.
-		"atoi": func(s string, defaultInt int) int {
-			i, err := strconv.Atoi(s)
-			if err != nil {
-				return defaultInt
-			}
-			return i
-		},
-	}
-
 	//Dotpath methods from datatools/dotpath in templates
 	Dotpath = template.FuncMap{
 		//dotpath takes a dot path, default for fail and data returning the results of default value
@@ -439,6 +350,11 @@ func normalizeDate(in string) string {
 		}
 	}
 	return strings.Join(parts, "-")
+}
+
+// AllFuncs() returns a Join of func maps available in tmplfn
+func AllFuncs() template.FuncMap {
+	return Join(Time, Page, Math, Strings, Iterations, Dotpath)
 }
 
 // Join take one or more func maps and returns an aggregate one.

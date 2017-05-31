@@ -8,9 +8,6 @@ import (
 	"strings"
 	"testing"
 	"text/template"
-
-	// Caltech Library packages
-	"github.com/caltechlibrary/tmplfn/numbers"
 )
 
 func TestCodeBlock(t *testing.T) {
@@ -117,7 +114,7 @@ func TestRender(t *testing.T) {
 
 	tSrc := `Title: {{ .title }}`
 
-	fMap := Join(Time, Page, Math, Types, Strings, Iterations, Conversions, Dotpath)
+	fMap := AllFuncs()
 
 	tmpl, err := AssembleString(fMap, tSrc)
 	if err != nil {
@@ -138,19 +135,20 @@ func TestRender(t *testing.T) {
 	}
 }
 
-func TestMath(t *testing.T) {
+func TestMathIntFunc(t *testing.T) {
 	tMap := map[string]interface{}{
 		"1": 1,
-		"2": 1.0,
-		"3": numbers.Number{Value: 3.0, NaN: false},
+		"2": 2.3,
+		"3": json.Number("3"),
 		"4": json.Number("4.0"),
+		"5": json.Number("5.3"),
 	}
 	for k, v := range tMap {
 		expected, _ := strconv.Atoi(k)
 		fn := Math["int"].(func(interface{}) int)
 		result := fn(v)
 		if expected != result {
-			t.Errorf("expected %d, got %+v", expected, result)
+			t.Errorf("expected %d, got %T %v", expected, result, result)
 		}
 	}
 }
