@@ -2,907 +2,324 @@ package numbers
 
 import (
 	"encoding/json"
-	"fmt"
-	"strconv"
+	"log"
 )
 
-// tmplfn supports calculations with two types of numbers, 
-// int64 and float64 if you store a 32 bit counter part 
-// they will be converted to 64 bit versions before
-// executing a computation (e.g. add, substract)
-
+// tmplfn supports calculations with four types of numbers,
+// int64, int, float64 and float32. In Add, Substract, Mutliply, Divide,
+// and Modulo the input values are normalized to the highest bit width of the two.
+// If the input value is a string or json.Number it is normalized to either float64 or int64 or
+// zero if parse fails.
 const (
-	NaNType = iota
-	IntType
-	Int64Type
-	Float32Type
-	Float64Type
-	JSONNumberType
-	StringType
+	naNType = iota
+	intType
+	int64Type
+	float32Type
+	float64Type
+	jsonNumberType
 )
 
-type Number struct {
-	Value interface{}
-	NaN   bool
-}
-
-func  NumberType(value interface{}) int {
+// numberType returns the best guess of numeric types this package supports
+func numberType(value interface{}) int {
 	switch value.(type) {
-	case string:
-		return StringType
 	case json.Number:
-		return JSONNumberType
+		return jsonNumberType
 	case float64:
-		return Float64Type
+		return float64Type
 	case int64:
-		return Int64Type
+		return int64Type
 	case float32:
-		return Float32Type
+		return float32Type
 	case int:
-		return IntType
+		return intType
 	default:
-		return NaNType
+		return naNType
 	}
 }
 
-func toType(v interface{}, returnType int) {
-	var a interface{}
+// toType converts an interface to the targetType (most by a float64Type, float32Type, int64Type or intType)
+func toType(v interface{}, targetType int) interface{} {
+	var (
+		a     interface{}
+		nType int
+	)
 
-	// covert to either a int64 or float64
-	switch v.(type) {
-	case string:
-		if i, err := strconv.ParserInt64(v.(string)); err == nil {
-			a = i
-		} else if f, err := strconv.ParseFloat64(v.(string); err == nil {
-			a = f
-		}
-	case json.Number:
-		if i, err := json.Number.ParserInt64(v.(string)); err == nil {
-			a = i
-		} else if f, err := json.Number.ParseFloat64(v.(string); err == nil {
-			a = f
-		}
-	case float32:
-		a = float64(v.(float32))
-	case int:
-		a = int64(v.(int))
-	default:
-		a = v
-
-
-	}
-
-
-
-	return a
-}
-
-func asNumbers(v1, v2 interface{}, returnType int) (interface{}, interface{}) {
-	var a, b interface{}
-	a = toType(v1, returnType)
-	b = toType(v2, returnType)
-	return a, b
-}
-
-// Converts a string to a signed float64 or int64
-func (n Number) stringToNumber(s string) {
-	if f, err := strconv.ParseFloat(s, 64); err == nil {
-		n.Value = f
-		return
-	}
-	if i, err := strconv.ParseInt(s, 10, 64); err == nil {
-		n.Value = i
-		return
-	}
-	n.NaN = true
-}
-
-func (n Number) float64ToNumber(f float64) {
-	n.Value = float64(f)
-}
-
-func (n Number) int64ToNumber(i int64) {
-	n.Value = int64(i)
-}
-
-// NewNumber takes a value and returns a new Number struct
-func NewNumber(v interface{}) Number {
-	n := Number{
-		Value: 0,
-		NaN:   false,
-	}
+	// normalize to either a float64, float32, int64 or int
 	switch v.(type) {
 	case json.Number:
-		n.stringToNumber(string(v.(json.Number)))
-	case string:
-		n.stringToNumber(v.(string))
+		a = 0
+		nType = int64Type
+		if i, err := v.(json.Number).Int64(); err == nil {
+			a = i
+			nType = int64Type
+		} else if f, err := v.(json.Number).Float64(); err == nil {
+			a = f
+			nType = float64Type
+		}
 	case float64:
-		n.Value = float64(v.(float64))
+		a = v.(float64)
+		nType = float64Type
 	case float32:
-		n.Value = float32(v.(float32))
+		a = v.(float32)
+		nType = float32Type
 	case int64:
-		n.Value = int64(v.(int64))
+		a = v.(int64)
+		nType = int64Type
 	case int:
-		n.Value = int(v.(int))
+		a = v.(int)
+		nType = intType
 	default:
-		n.NaN = true
+		// NOTE: If it is not a supported type then treat value as zero
+		a = int(0)
+		nType = intType
 	}
-	return n
+
+	// now convert to target type
+	switch targetType {
+	case float64Type:
+		if nType == int64Type {
+			return float64(a.(int64))
+		} else if nType == intType {
+			return float64(a.(int))
+		} else if nType == float32Type {
+			return float64(a.(float32))
+		}
+		return a.(float64)
+	case int64Type:
+		if nType == int64Type {
+			return a.(int64)
+		} else if nType == intType {
+			return int64(a.(int))
+		} else if nType == float32Type {
+			return int64(a.(float32))
+		}
+		return int64(a.(float64))
+	case float32Type:
+		if nType == int64Type {
+			return float32(a.(int64))
+		} else if nType == intType {
+			return float32(a.(int))
+		} else if nType == float32Type {
+			return a.(float32)
+		}
+		return float32(a.(float64))
+	default:
+		// intType is the default type
+		if nType == int64Type {
+			return int(a.(int64))
+		} else if nType == intType {
+			return a.(int)
+		} else if nType == float32Type {
+			return int(a.(float32))
+		}
+		return int(a.(float64))
+	}
 }
 
-// IsValidNumber returns true if NaN is false, true otherwise
-func (n Number) IsValidNumber() bool {
-	return (n.NaN == false)
+// normalizeJSONNumber converts to either a float64 or int64 or zero
+func normalizeJSONNumberType(n json.Number) int {
+	if _, err := n.Float64(); err == nil {
+		return float64Type
+	}
+	return int64Type
+}
+
+// normalizeNumbers takes to interface values and promotes both to float64 if any floats present
+// otherwise promotes to int64, returns normalized values with type chosen
+func normalizeNumbers(v1, v2 interface{}) (interface{}, interface{}, int) {
+	var (
+		a, b                interface{}
+		aType, bType, nType int
+	)
+	aType = numberType(v1)
+	bType = numberType(v2)
+	// NOTE: If type is jsonNumberType then convert to float64 or int64 before normalizing
+	if aType == jsonNumberType {
+		aType = normalizeJSONNumberType(v1.(json.Number))
+	}
+	if bType == jsonNumberType {
+		bType = normalizeJSONNumberType(v2.(json.Number))
+	}
+	switch {
+	case aType == float64Type || bType == float64Type:
+		a = toType(v1, float64Type)
+		b = toType(v2, float64Type)
+		nType = float64Type
+	case aType == float32Type || bType == float32Type:
+		a = toType(v1, float32Type)
+		b = toType(v2, float32Type)
+		nType = float32Type
+	case aType == int64Type || bType == int64Type:
+		a = toType(v1, int64Type)
+		b = toType(v2, int64Type)
+		nType = int64Type
+	default:
+		a = toType(v1, intType)
+		b = toType(v2, intType)
+		nType = intType
+	}
+	return a, b, nType
+}
+
+// IsNumber checks to see if the input type can render to a float64, float32, int64 or int
+func IsNumber(v interface{}) bool {
+	switch v.(type) {
+	case json.Number:
+		if _, err := v.(json.Number).Float64(); err == nil {
+			return true
+		}
+		if _, err := v.(json.Number).Int64(); err == nil {
+			return true
+		}
+	case float64:
+		return true
+	case float32:
+		return true
+	case int64:
+		return true
+	case int:
+		return true
+	}
+	return false
 }
 
 // IsZero checks to see if a Number is zero
-func (n Number) IsZero() bool {
-	switch n.Value.(type) {
+func IsZero(v interface{}) bool {
+	switch v.(type) {
 	case int:
-		if n.Value == int(0) {
+		if v == int(0) {
 			return true
 		}
 	case int64:
-		if n.Value == int64(0) {
+		if v == int64(0) {
 			return true
 		}
 	case float32:
-		if n.Value == float32(0) {
+		if v == float32(0) {
 			return true
 		}
 	case float64:
-		if n.Value == float64(0) {
+		if v == float64(0) {
 			return true
 		}
 	}
 	return false
 }
 
-func (n Number) IsInt64() bool {
-	switch n.Value.(type) {
-	case int64:
-		return true
+// Add v1 and v2 or return zero if type issue
+func Add(v1, v2 interface{}) interface{} {
+	a, b, nType := normalizeNumbers(v1, v2)
+	switch nType {
+	case intType:
+		return a.(int) + b.(int)
+	case float32Type:
+		return a.(float32) + b.(float32)
+	case int64Type:
+		return a.(int64) + b.(int64)
+	case float64Type:
+		return a.(float64) + b.(float64)
 	default:
-		return false
-	}
-}
-
-func (n Number) IsInt() bool {
-	switch n.Value.(type) {
-	case int:
-		return true
-	default:
-		return false
-	}
-}
-
-func (n Number) IsFloat32() bool {
-	switch n.Value.(type) {
-	case float32:
-		return true
-	default:
-		return false
-	}
-}
-
-func (n Number) IsFloat64() bool {
-	switch n.Value.(type) {
-	case float64:
-		return true
-	default:
-		return false
-	}
-}
-
-// Float converts the internal representation to a Go float64
-func (n Number) Float64() float64 {
-	if n.NaN == true {
-		return float64(0.0)
-	}
-	switch n.Value.(type) {
-	case float64:
-		return n.Value.(float64)
-	case int64:
-		return float64(n.Value.(int64))
-	case int:
-		return float64(n.Value.(int))
-	case float32:
-		return float64(n.Value.(float64))
-	default:
-		return float64(0.0)
-	}
-}
-
-// Float converts the internal representation to a Go float64
-func (n Number) Float32() float32 {
-	if n.NaN == true {
-		return float32(0.0)
-	}
-	switch n.Value.(type) {
-	case float64:
-		return float32(n.Value.(float64))
-	case int64:
-		return float32(n.Value.(int64))
-	case int:
-		return float32(n.Value.(int))
-	case float32:
-		return n.Value.(float32)
-	default:
-		return float32(0.0)
-	}
-}
-
-// Int64 converts the internal representation to a Go int64
-func (n Number) Int64() int64 {
-	if n.NaN == true {
-		return int64(0)
-	}
-	switch n.Value.(type) {
-	case int64:
-		return n.Value.(int64)
-	case int:
-		return int64(n.Value.(int64))
-	case float32:
-		return int64(n.Value.(float32))
-	case float64:
-		return int64(n.Value.(float64))
-	default:
-		return int64(0)
-	}
-}
-
-// Int convert the internal representation to a Go int
-func (n Number) Int() int {
-	if n.NaN == true {
 		return 0
 	}
-	switch n.Value.(type) {
-	case int64:
-		return int(n.Value.(int64))
-	case int:
-		return n.Value.(int)
-	case float64:
-		return int(n.Value.(float64))
-	case float32:
-		return int(n.Value.(float32))
+}
+
+// Substract v2 from v1 or return zero if a type issue
+func Subtract(v1, v2 interface{}) interface{} {
+	a, b, nType := normalizeNumbers(v1, v2)
+	switch nType {
+	case intType:
+		return a.(int) - b.(int)
+	case float32Type:
+		return a.(float32) - b.(float32)
+	case int64Type:
+		return a.(int64) - b.(int64)
+	case float64Type:
+		return a.(float64) - b.(float64)
 	default:
-		return int(0)
+		return 0
 	}
 }
 
-// String converts n to its string presentation
-func (n Number) String() string {
-	if n.NaN == true {
-		return "NaN"
-	}
-	switch n.Value.(type) {
-	case int64:
-		return fmt.Sprintf("%d", n.Value)
-	case int:
-		return fmt.Sprintf("%d", n.Value)
-	case float64:
-		return fmt.Sprintf("%g", n.Value)
-	case float32:
-		return fmt.Sprintf("%g", n.Value)
+// Multiply v1 by v2 returning the result or zero if type issue
+func Multiply(v1, v2 interface{}) interface{} {
+	a, b, nType := normalizeNumbers(v1, v2)
+	switch nType {
+	case intType:
+		return a.(int) * b.(int)
+	case float32Type:
+		return a.(float32) * b.(float32)
+	case int64Type:
+		return a.(int64) * b.(int64)
+	case float64Type:
+		return a.(float64) * b.(float64)
 	default:
-		return "NaN"
+		return 0
 	}
 }
 
-func IsGreater(a, b Number) bool {
-	if a.NaN == true || b.NaN == true {
-		return false
+// Divide v1 by v2 for non-zero v2 or return zero
+func Divide(v1, v2 interface{}) interface{} {
+	a, b, nType := normalizeNumbers(v1, v2)
+	//FIXME: this is ugly, divide by zero error will be logged
+	if IsZero(b) {
+		log.Printf("Divide by Zero error for values %T %v, %T %v\n", a, a, b, b)
+		return 0
 	}
-	aType := NumberType(a)
-	bType := NumberType(b)
-
-	switch {
-	// Types match
-	case aType == Float64Type && bType == Float64Type:
-		return (a.Value.(float64) > b.Value.(float64))
-	case aType == Float32Type && bType == Float32Type:
-		return (a.Value.(float32) > b.Value.(float32))
-	case aType == Int64Type && bType == Int64Type:
-		return (a.Value.(int64) > b.Value.(int64))
-	case aType == IntType && bType == IntType:
-		return (a.Value.(int) > b.Value.(int))
-	// Permutations float64 plus other types
-	case aType == Float64Type && bType == Float32Type:
-		return (a.Value.(float64) > float64(b.Value.(float32)))
-	case aType == Float64Type && bType == Int64Type:
-		return (a.Value.(float64) > float64(b.Value.(int64)))
-	case aType == Float64Type && bType == IntType:
-		return (a.Value.(float64) > float64(b.Value.(int)))
-	// Permutations float32 plus other types
-	case aType == Float32Type && bType == Float64Type:
-		return (a.Value.(float32) > float32(b.Value.(float64)))
-	case aType == Float32Type && bType == Int64Type:
-		return (a.Value.(float32) > float32(b.Value.(int64)))
-	case aType == Float32Type && bType == IntType:
-		return (a.Value.(float32) > float32(b.Value.(int)))
-	// Permutations Int64 plus other types
-	case aType == Int64Type && bType == Float64Type:
-		return (a.Value.(int64) > int64(b.Value.(float64)))
-	case aType == Int64Type && bType == Float32Type:
-		return (a.Value.(int64) > int64(b.Value.(float32)))
-	case aType == Int64Type && bType == IntType:
-		return (a.Value.(int64) > int64(b.Value.(int)))
-		// Permutatins Int plus other types
-	case aType == IntType && bType == Float64Type:
-		return (a.Value.(int) > int(b.Value.(float64)))
-	case aType == IntType && bType == Float32Type:
-		return (a.Value.(int) > int(b.Value.(float32)))
-	case aType == IntType && bType == Int64Type:
-		return (a.Value.(int) > int(b.Value.(int64)))
+	switch nType {
+	case intType:
+		return a.(int) / b.(int)
+	case float32Type:
+		return a.(float32) / b.(float32)
+	case int64Type:
+		return a.(int64) / b.(int64)
+	case float64Type:
+		return a.(float64) / b.(float64)
 	default:
-		// NOTE: if not a number then return false
-		return false
+		return 0
 	}
 }
 
-func IsLess(v1, v2 interface{}) bool {
-	a, b := asNumbers(v1, v2)
-	if a.NaN == true || b.NaN == true {
-		return false
-	}
-	aType := NumberType(a)
-	bType := NumberType(b)
-
-	switch {
-	// Types match
-	case aType == Float64Type && bType == Float64Type:
-		return (a.Value.(float64) < b.Value.(float64))
-	case aType == Float32Type && bType == Float32Type:
-		return (a.Value.(float32) < b.Value.(float32))
-	case aType == Int64Type && bType == Int64Type:
-		return (a.Value.(int64) < b.Value.(int64))
-	case aType == IntType && bType == IntType:
-		return (a.Value.(int) < b.Value.(int))
-	// Permutations float64 plus other types
-	case aType == Float64Type && bType == Float32Type:
-		return (a.Value.(float64) < float64(b.Value.(float32)))
-	case aType == Float64Type && bType == Int64Type:
-		return (a.Value.(float64) < float64(b.Value.(int64)))
-	case aType == Float64Type && bType == IntType:
-		return (a.Value.(float64) < float64(b.Value.(int)))
-	// Permutations float32 plus other types
-	case aType == Float32Type && bType == Float64Type:
-		return (a.Value.(float32) < float32(b.Value.(float64)))
-	case aType == Float32Type && bType == Int64Type:
-		return (a.Value.(float32) < float32(b.Value.(int64)))
-	case aType == Float32Type && bType == IntType:
-		return (a.Value.(float32) < float32(b.Value.(int)))
-	// Permutations Int64 plus other types
-	case aType == Int64Type && bType == Float64Type:
-		return (a.Value.(int64) < int64(b.Value.(float64)))
-	case aType == Int64Type && bType == Float32Type:
-		return (a.Value.(int64) < int64(b.Value.(float32)))
-	case aType == Int64Type && bType == IntType:
-		return (a.Value.(int64) < int64(b.Value.(int)))
-		// Permutatins Int plus other types
-	case aType == IntType && bType == Float64Type:
-		return (a.Value.(int) < int(b.Value.(float64)))
-	case aType == IntType && bType == Float32Type:
-		return (a.Value.(int) < int(b.Value.(float32)))
-	case aType == IntType && bType == Int64Type:
-		return (a.Value.(int) < int(b.Value.(int64)))
+// Modulo returns the modulo of int or int64 or zero
+func Modulo(v1, v2 interface{}) interface{} {
+	a, b, nType := normalizeNumbers(v1, v2)
+	switch nType {
+	case intType:
+		return a.(int) % b.(int)
+	case int64Type:
+		return a.(int64) % b.(int64)
 	default:
-		// NOTE: if not a number then return false
-		return false
+		return 0
 	}
 }
 
-func IsEqual(v1, v2 interface{}) bool {
-	a, b := asNumbers(v1, v2)
-	if a.NaN == true || b.NaN == true {
-		return false
-	}
-	aType := NumberType(a)
-	bType := NumberType(b)
-
-	switch {
-	// Types match
-	case aType == Float64Type && bType == Float64Type:
-		return (a.Value.(float64) == b.Value.(float64))
-	case aType == Float32Type && bType == Float32Type:
-		return (a.Value.(float32) == b.Value.(float32))
-	case aType == Int64Type && bType == Int64Type:
-		return (a.Value.(int64) == b.Value.(int64))
-	case aType == IntType && bType == IntType:
-		return (a.Value.(int) == b.Value.(int))
-	// Permutations float64 plus other types
-	case aType == Float64Type && bType == Float32Type:
-		return (a.Value.(float64) == float64(b.Value.(float32)))
-	case aType == Float64Type && bType == Int64Type:
-		return (a.Value.(float64) == float64(b.Value.(int64)))
-	case aType == Float64Type && bType == IntType:
-		return (a.Value.(float64) == float64(b.Value.(int)))
-	// Permutations float32 plus other types
-	case aType == Float32Type && bType == Float64Type:
-		return (a.Value.(float32) == float32(b.Value.(float64)))
-	case aType == Float32Type && bType == Int64Type:
-		return (a.Value.(float32) == float32(b.Value.(int64)))
-	case aType == Float32Type && bType == IntType:
-		return (a.Value.(float32) == float32(b.Value.(int)))
-	// Permutations Int64 plus other types
-	case aType == Int64Type && bType == Float64Type:
-		return (a.Value.(int64) == int64(b.Value.(float64)))
-	case aType == Int64Type && bType == Float32Type:
-		return (a.Value.(int64) == int64(b.Value.(float32)))
-	case aType == Int64Type && bType == IntType:
-		return (a.Value.(int64) == int64(b.Value.(int)))
-		// Permutatins Int plus other types
-	case aType == IntType && bType == Float64Type:
-		return (a.Value.(int) == int(b.Value.(float64)))
-	case aType == IntType && bType == Float32Type:
-		return (a.Value.(int) == int(b.Value.(float32)))
-	case aType == IntType && bType == Int64Type:
-		return (a.Value.(int) == int(b.Value.(int64)))
-	default:
-		// NOTE: if not a number then return false
-		return false
-	}
+// Addi adds two values return an int or zero
+func Addi(v1, v2 interface{}) int {
+	v := Add(v1, v2)
+	return toType(v, intType).(int)
 }
 
-func Add(v1, v2 interface{}) Number {
-	a, b := asNumbers(v1, v2)
-	aType := NumberType(a)
-	bType := NumberType(b)
-
-	switch {
-	// Types match
-	case aType == Float64Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(float64) + b.Value.(float64)),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(float32) + b.Value.(float32)),
-			NaN:   false,
-		}
-
-	case aType == Int64Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int64) + b.Value.(int64)),
-			NaN:   false,
-		}
-	case aType == IntType && bType == IntType:
-		return Number{
-			Value: (a.Value.(int) + b.Value.(int)),
-			NaN:   false,
-		}
-	// Permutations float64 plus other types
-	case aType == Float64Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(float64) + float64(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == Float64Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(float64) + float64(b.Value.(int64))),
-			NaN:   false,
-		}
-	case aType == Float64Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(float64) + float64(b.Value.(int))),
-			NaN:   false,
-		}
-	// Permutations float32 plus other types
-	case aType == Float32Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(float32) + float32(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(float32) + float32(b.Value.(int64))),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(float32) + float32(b.Value.(int))),
-			NaN:   false,
-		}
-	// Permutations Int64 plus other types
-	case aType == Int64Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int64) + int64(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int64) + int64(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(int64) + int64(b.Value.(int))),
-			NaN:   false,
-		}
-		// Permutatins Int plus other types
-	case aType == IntType && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int) + int(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int) + int(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int) + int(b.Value.(int64))),
-			NaN:   false,
-		}
-	default:
-		return Number{
-			Value: 0,
-			NaN:   true,
-		}
-	}
+// Subi adds two values return an int or zero
+func Subi(v1, v2 interface{}) int {
+	v := Subtract(v1, v2)
+	return toType(v, intType).(int)
 }
 
-func Subtract(v1, v2 interface{}) Number {
-	a, b := asNumbers(v1, v2)
-	aType := NumberType(a)
-	bType := NumberType(b)
-
-	switch {
-	// Types match
-	case aType == Float64Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(float64) - b.Value.(float64)),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(float32) - b.Value.(float32)),
-			NaN:   false,
-		}
-
-	case aType == Int64Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int64) - b.Value.(int64)),
-			NaN:   false,
-		}
-	case aType == IntType && bType == IntType:
-		return Number{
-			Value: (a.Value.(int) - b.Value.(int)),
-			NaN:   false,
-		}
-	// Permutations float64 plus other types
-	case aType == Float64Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(float64) - float64(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == Float64Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(float64) - float64(b.Value.(int64))),
-			NaN:   false,
-		}
-	case aType == Float64Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(float64) - float64(b.Value.(int))),
-			NaN:   false,
-		}
-	// Permutations float32 plus other types
-	case aType == Float32Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(float32) - float32(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(float32) - float32(b.Value.(int64))),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(float32) - float32(b.Value.(int))),
-			NaN:   false,
-		}
-	// Permutations Int64 plus other types
-	case aType == Int64Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int64) - int64(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int64) - int64(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(int64) - int64(b.Value.(int))),
-			NaN:   false,
-		}
-		// Permutatins Int plus other types
-	case aType == IntType && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int) - int(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int) - int(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int) - int(b.Value.(int64))),
-			NaN:   false,
-		}
-	default:
-		return Number{
-			Value: 0,
-			NaN:   true,
-		}
-	}
+// Int64 returns an int64 for value provided
+func Int64(v interface{}) int64 {
+	return toType(v, int64Type).(int64)
 }
 
-func Multiply(v1, v2 interface{}) Number {
-	a, b := asNumbers(v1, v2)
-	aType := NumberType(a)
-	bType := NumberType(b)
-
-	switch {
-	// Types match
-	case aType == Float64Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(float64) * b.Value.(float64)),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(float32) * b.Value.(float32)),
-			NaN:   false,
-		}
-
-	case aType == Int64Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int64) * b.Value.(int64)),
-			NaN:   false,
-		}
-	case aType == IntType && bType == IntType:
-		return Number{
-			Value: (a.Value.(int) * b.Value.(int)),
-			NaN:   false,
-		}
-	// Permutations float64 plus other types
-	case aType == Float64Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(float64) * float64(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == Float64Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(float64) * float64(b.Value.(int64))),
-			NaN:   false,
-		}
-	case aType == Float64Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(float64) * float64(b.Value.(int))),
-			NaN:   false,
-		}
-	// Permutations float32 plus other types
-	case aType == Float32Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(float32) * float32(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(float32) * float32(b.Value.(int64))),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(float32) * float32(b.Value.(int))),
-			NaN:   false,
-		}
-	// Permutations Int64 plus other types
-	case aType == Int64Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int64) * int64(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int64) * int64(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(int64) * int64(b.Value.(int))),
-			NaN:   false,
-		}
-		// Permutatins Int plus other types
-	case aType == IntType && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int) * int(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int) * int(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int) * int(b.Value.(int64))),
-			NaN:   false,
-		}
-	default:
-		return Number{
-			Value: 0,
-			NaN:   true,
-		}
-	}
+// Int returns a int for value provided
+func Int(v interface{}) int {
+	return toType(v, intType).(int)
 }
 
-func Divide(v1, v2 Number) Number {
-	a, b := asNumbers(v1, v2)
-	if b.IsZero() == true {
-		return Number{
-			Value: int64(0),
-			NaN:   true,
-		}
-	}
-	aType := NumberType(a)
-	bType := NumberType(b)
-
-	switch {
-	// Types match
-	case aType == Float64Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(float64) / b.Value.(float64)),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(float32) / b.Value.(float32)),
-			NaN:   false,
-		}
-
-	case aType == Int64Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int64) / b.Value.(int64)),
-			NaN:   false,
-		}
-	case aType == IntType && bType == IntType:
-		return Number{
-			Value: (a.Value.(int) / b.Value.(int)),
-			NaN:   false,
-		}
-	// Permutations float64 plus other types
-	case aType == Float64Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(float64) / float64(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == Float64Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(float64) / float64(b.Value.(int64))),
-			NaN:   false,
-		}
-	case aType == Float64Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(float64) / float64(b.Value.(int))),
-			NaN:   false,
-		}
-	// Permutations float32 plus other types
-	case aType == Float32Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(float32) / float32(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(float32) / float32(b.Value.(int64))),
-			NaN:   false,
-		}
-	case aType == Float32Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(float32) / float32(b.Value.(int))),
-			NaN:   false,
-		}
-	// Permutations Int64 plus other types
-	case aType == Int64Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int64) / int64(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int64) / int64(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(int64) / int64(b.Value.(int))),
-			NaN:   false,
-		}
-		// Permutatins Int plus other types
-	case aType == IntType && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int) / int(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int) / int(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int) / int(b.Value.(int64))),
-			NaN:   false,
-		}
-	default:
-		return Number{
-			Value: 0,
-			NaN:   true,
-		}
-	}
+// Float32 returns a float32 for value provided
+func Float32(v interface{}) float32 {
+	return toType(v, float32Type).(float32)
 }
 
-func Modulo(v1, v2 interface{}) Number {
-	a, b := asNumbers(v1, v2)
-	aType := NumberType(a)
-	bType := NumberType(b)
-
-	switch {
-	// Types match
-	case aType == Int64Type && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int64) % b.Value.(int64)),
-			NaN:   false,
-		}
-	case aType == IntType && bType == IntType:
-		return Number{
-			Value: (a.Value.(int) % b.Value.(int)),
-			NaN:   false,
-		}
-	// Permutations Int64 plus other types
-	case aType == Int64Type && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int64) % int64(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int64) % int64(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == Int64Type && bType == IntType:
-		return Number{
-			Value: (a.Value.(int64) % int64(b.Value.(int))),
-			NaN:   false,
-		}
-		// Permutatins Int plus other types
-	case aType == IntType && bType == Float64Type:
-		return Number{
-			Value: (a.Value.(int) % int(b.Value.(float64))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Float32Type:
-		return Number{
-			Value: (a.Value.(int) % int(b.Value.(float32))),
-			NaN:   false,
-		}
-	case aType == IntType && bType == Int64Type:
-		return Number{
-			Value: (a.Value.(int) % int(b.Value.(int64))),
-			NaN:   false,
-		}
-	default:
-		return Number{
-			Value: 0,
-			NaN:   true,
-		}
-	}
+// Float64 returns a float64 for value provided
+func Float64(v interface{}) float64 {
+	return toType(v, float64Type).(float64)
 }
