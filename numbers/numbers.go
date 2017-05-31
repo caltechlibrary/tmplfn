@@ -6,9 +6,10 @@ import (
 	"strconv"
 )
 
-// tmplfn supports two types of numbers, int64 and float64
-// if you store a 32 bit counter part they will be stored
-// as 64 bit versions
+// tmplfn supports calculations with two types of numbers, 
+// int64 and float64 if you store a 32 bit counter part 
+// they will be converted to 64 bit versions before
+// executing a computation (e.g. add, substract)
 
 const (
 	NaNType = iota
@@ -17,6 +18,7 @@ const (
 	Float32Type
 	Float64Type
 	JSONNumberType
+	StringType
 )
 
 type Number struct {
@@ -24,8 +26,12 @@ type Number struct {
 	NaN   bool
 }
 
-func (n Number) Type() int {
-	switch n.Value.(type) {
+func  NumberType(value interface{}) int {
+	switch value.(type) {
+	case string:
+		return StringType
+	case json.Number:
+		return JSONNumberType
 	case float64:
 		return Float64Type
 	case int64:
@@ -39,20 +45,42 @@ func (n Number) Type() int {
 	}
 }
 
-func asNumbers(v1, v2 interface{}) (Number, Number) {
-	var a, b Number
-	switch v1.(type) {
-	case Number:
-		a = v1.(Number)
+func toType(v interface{}, returnType int) {
+	var a interface{}
+
+	// covert to either a int64 or float64
+	switch v.(type) {
+	case string:
+		if i, err := strconv.ParserInt64(v.(string)); err == nil {
+			a = i
+		} else if f, err := strconv.ParseFloat64(v.(string); err == nil {
+			a = f
+		}
+	case json.Number:
+		if i, err := json.Number.ParserInt64(v.(string)); err == nil {
+			a = i
+		} else if f, err := json.Number.ParseFloat64(v.(string); err == nil {
+			a = f
+		}
+	case float32:
+		a = float64(v.(float32))
+	case int:
+		a = int64(v.(int))
 	default:
-		a = NewNumber(v1)
+		a = v
+
+
 	}
-	switch v2.(type) {
-	case Number:
-		b = v2.(Number)
-	default:
-		b = NewNumber(v2)
-	}
+
+
+
+	return a
+}
+
+func asNumbers(v1, v2 interface{}, returnType int) (interface{}, interface{}) {
+	var a, b interface{}
+	a = toType(v1, returnType)
+	b = toType(v2, returnType)
 	return a, b
 }
 
@@ -265,8 +293,8 @@ func IsGreater(a, b Number) bool {
 	if a.NaN == true || b.NaN == true {
 		return false
 	}
-	aType := a.Type()
-	bType := b.Type()
+	aType := NumberType(a)
+	bType := NumberType(b)
 
 	switch {
 	// Types match
@@ -317,8 +345,8 @@ func IsLess(v1, v2 interface{}) bool {
 	if a.NaN == true || b.NaN == true {
 		return false
 	}
-	aType := a.Type()
-	bType := b.Type()
+	aType := NumberType(a)
+	bType := NumberType(b)
 
 	switch {
 	// Types match
@@ -369,8 +397,8 @@ func IsEqual(v1, v2 interface{}) bool {
 	if a.NaN == true || b.NaN == true {
 		return false
 	}
-	aType := a.Type()
-	bType := b.Type()
+	aType := NumberType(a)
+	bType := NumberType(b)
 
 	switch {
 	// Types match
@@ -418,8 +446,8 @@ func IsEqual(v1, v2 interface{}) bool {
 
 func Add(v1, v2 interface{}) Number {
 	a, b := asNumbers(v1, v2)
-	aType := a.Type()
-	bType := b.Type()
+	aType := NumberType(a)
+	bType := NumberType(b)
 
 	switch {
 	// Types match
@@ -518,8 +546,8 @@ func Add(v1, v2 interface{}) Number {
 
 func Subtract(v1, v2 interface{}) Number {
 	a, b := asNumbers(v1, v2)
-	aType := a.Type()
-	bType := b.Type()
+	aType := NumberType(a)
+	bType := NumberType(b)
 
 	switch {
 	// Types match
@@ -618,8 +646,8 @@ func Subtract(v1, v2 interface{}) Number {
 
 func Multiply(v1, v2 interface{}) Number {
 	a, b := asNumbers(v1, v2)
-	aType := a.Type()
-	bType := b.Type()
+	aType := NumberType(a)
+	bType := NumberType(b)
 
 	switch {
 	// Types match
@@ -724,8 +752,8 @@ func Divide(v1, v2 Number) Number {
 			NaN:   true,
 		}
 	}
-	aType := a.Type()
-	bType := b.Type()
+	aType := NumberType(a)
+	bType := NumberType(b)
 
 	switch {
 	// Types match
@@ -824,8 +852,8 @@ func Divide(v1, v2 Number) Number {
 
 func Modulo(v1, v2 interface{}) Number {
 	a, b := asNumbers(v1, v2)
-	aType := a.Type()
-	bType := b.Type()
+	aType := NumberType(a)
+	bType := NumberType(b)
 
 	switch {
 	// Types match
