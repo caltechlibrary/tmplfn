@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -156,5 +157,51 @@ func TestMathIntFunc(t *testing.T) {
 		if expected != result {
 			t.Errorf("expected %d, got %T %v", expected, result, result)
 		}
+	}
+}
+
+func TestTempleExec(t *testing.T) {
+	var (
+		tpl *template.Template
+		err error
+	)
+
+	tName := "stdin"
+	tSrc := []byte("Hello {{ .Name -}}!")
+	tmpl := New(AllFuncs())
+	if err := tmpl.Add(tName, tSrc); err != nil {
+		t.Errorf("%s", err)
+	}
+	if tpl, err = tmpl.Assemble(); err != nil {
+		t.Errorf("%s", err)
+	}
+
+	var data interface{}
+	json.Unmarshal([]byte(`{"Name":"Robert"}`), &data)
+
+	if err := tpl.Execute(os.Stdout, data); err != nil {
+		t.Errorf("%s", err)
+	}
+
+	tName = "hello.tmpl"
+	tSrc = []byte(`
+	Hello {{ .Name -}},
+
+	Counting...
+
+	{{range $i := (ints 1 10 2)}}
+	Cnt: {{$i}},
+	{{end}}
+`)
+
+	tmpl = New(AllFuncs())
+	if err := tmpl.Add(tName, tSrc); err != nil {
+		t.Errorf("%s", err)
+	}
+	if tpl, err = tmpl.Assemble(); err != nil {
+		t.Errorf("%s", err)
+	}
+	if err := tpl.Execute(os.Stdout, data); err != nil {
+		t.Errorf("%s", err)
 	}
 }

@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/doc"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -375,19 +374,20 @@ func AllFuncs() template.FuncMap {
 // It is useful to create a series of defaults templates that can be
 // overwritten by user supplied template files.
 type Tmpl struct {
-	// Templates pointes as a template.Template (e.g. html or text template.Template)
-	Template *template.Template
+	// Holds the function map for templates
+	FuncMap template.FuncMap
+
 	// Code holds a map of names to byte arrays, the byte arrays hold the template source code
 	// the names can be either filename or other names defined by the implementor
 	Code map[string][]byte
 }
 
-// NewTmpl creates a pointer to a template.Template and  empty map of names to byte arrays
+// New creates a pointer to a template.Template and  empty map of names to byte arrays
 // pointing at an empty byte array
-func NewTmpl() *Tmpl {
+func New(fm template.FuncMap) *Tmpl {
 	return &Tmpl{
-		Template: nil,
-		Code:     map[string][]byte{},
+		FuncMap: fm,
+		Code:    map[string][]byte{},
 	}
 }
 
@@ -424,49 +424,55 @@ func (t *Tmpl) ReadFiles(fNames ...string) error {
 	return nil
 }
 
-// Merge takes a map of names pointing at byte arrays and merges that with
-// existing Code property overwritting previous contents when necessary.
-func (t Tmpl) Merge(srcs map[string][]byte) error {
-	for k, v := range srcs {
-		t.Code[k] = v
-		if _, ok := t.Code[k]; ok == false {
-			return fmt.Errorf("Can't add/update %s", k)
-		}
+// Add takes a name and source (byte array) and updates t.Code with it.
+// It is like Merge but for a single file.
+func (t Tmpl) Add(name string, src []byte) error {
+	t.Code[name] = src
+	if _, ok := t.Code[name]; ok != true {
+		return fmt.Errorf("failed to add %s", name)
 	}
 	return nil
 }
 
-// Assemble takes a map of template functions creates a new Tmpl.Template
-// property and parses the sources in Tmpl.Code map.
-func (t Tmpl) Assemble(tmplFuncs template.FuncMap) error {
-	var err error
-
-	// Assemble always creates a new master template with the provided templFuncs
-	// Next it parses all the source code in Code property.
-	t.Template, err = template.New("master").Funcs(tmplFuncs).Parse("")
-	if err != nil {
-		return err
-	}
-
-	for tName, tSrc := range t.Code {
-		// We use the "master" template for subsequent New calls to associate
-		// with other templates.  The new template is associated with t.
-		tmpl := t.Template.New(tName)
-		src := string(tSrc)
-		// Now that we're setup let's parse the source for tName.
-		_, err = tmpl.Parse(src)
-		if err != nil {
+// Merge takes a map of names pointing at byte arrays and merges that with
+// existing Code property overwritting previous contents when necessary.
+func (t Tmpl) Merge(srcs map[string][]byte) error {
+	for name, src := range srcs {
+		if err := t.Add(name, src); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// Execute checks to see the Tmpl.Template is not nil and then
-// calls *template.Template.Execute() returning any errors.
-func (t *Tmpl) Execute(out io.Writer, data *interface{}) error {
-	if t.Template == nil {
-		return fmt.Errorf("template has not been assembled yet")
+// Assemble mimics template.ParseFiles() but works with the properties of
+// a Tmpl struct.
+func (t Tmpl) Assemble() (*template.Template, error) {
+	if len(t.Code) == 0 {
+		// Mimmic template.ParseFiles() error
+		return nil, fmt.Errorf("tmplfn.Assemble(): no template sources to parse")
 	}
-	return t.Template.Execute(out, data)
+	var tpl *template.Template
+	// Scan the individual templates and parse errors.
+	for tName, tSrc := range t.Code {
+		s := string(tSrc)
+		name := path.Base(tName)
+		// This is patterned after template.ParseFiles() internal calls to parseFiles()
+		// First template becomes return value if not already defined,
+		// use subsequent New calls to associate all the templates together.
+		// Otherwise we create a new template associated with t.Template
+		var tmpl *template.Template
+		if tpl == nil {
+			tpl = template.New(name).Funcs(t.FuncMap)
+		}
+		if name == tpl.Name() {
+			tmpl = tpl
+		} else {
+			tmpl = tpl.New(name).Funcs(t.FuncMap)
+		}
+		if _, err := tmpl.Parse(s); err != nil {
+			return nil, err
+		}
+	}
+	return tpl, nil
 }
