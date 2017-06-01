@@ -10,6 +10,12 @@ import (
 	"text/template"
 )
 
+// assembleString like Tmpl.Assemble but using a string as a source for the template
+// this is used for testing Tmpl functions
+func assembleString(tmplFuncs template.FuncMap, src string) (*template.Template, error) {
+	return template.New("master").Funcs(tmplFuncs).Parse(src)
+}
+
 func TestCodeBlock(t *testing.T) {
 	data := map[string]interface{}{
 		"data": `
@@ -31,7 +37,7 @@ This is a codeblock below
 `, "```", "```")
 
 	fMap := Join(Time, Page)
-	tmpl, err := AssembleString(fMap, tSrc)
+	tmpl, err := assembleString(fMap, tSrc)
 	if err != nil {
 		t.Errorf("%s", err)
 		t.FailNow()
@@ -116,7 +122,7 @@ func TestRender(t *testing.T) {
 
 	fMap := AllFuncs()
 
-	tmpl, err := AssembleString(fMap, tSrc)
+	tmpl, err := assembleString(fMap, tSrc)
 	if err != nil {
 		t.Errorf("%s", err)
 		t.FailNow()

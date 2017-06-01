@@ -23,8 +23,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/doc"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -38,7 +41,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.10`
+	Version = `v0.0.11`
 
 	// Time provides a common set of time/date related functions for use in text/template or html/template
 	Time = template.FuncMap{
@@ -181,13 +184,13 @@ var (
 	}
 
 	Strings = template.FuncMap{
-		"hasPrefix": func(s, substring string) bool {
+		"prefix": func(s, substring string) bool {
 			return strings.HasPrefix(s, substring)
 		},
 		"contains": func(s, substring string) bool {
 			return strings.Contains(s, substring)
 		},
-		"hasSuffix": func(s, substring string) bool {
+		"suffix": func(s, substring string) bool {
 			return strings.HasSuffix(s, substring)
 		},
 		"title": func(s string) string {
@@ -206,30 +209,30 @@ var (
 		"nl2p": func(s string) string {
 			return strings.Replace(strings.Replace(s, "\n\n", "<p>", -1), "\n", "<br />", -1)
 		},
-		"prevI": func(from, size, min, max int, wrap bool) int {
-			prev := from - size
-			if prev < min {
+		"previ": func(pos, move_size, min_pos, max_pos int, wrap bool) int {
+			prev := pos - move_size
+			if prev < min_pos {
 				if wrap == false {
-					return min
+					return min_pos
 				}
-				return max
+				return max_pos
 			}
 			return prev
 		},
-		"nextI": func(from, size, min, max int, wrap bool) int {
-			next := from + size
-			if next > max {
+		"nexti": func(pos, move_size, min_pos, max_pos int, wrap bool) int {
+			next := pos + move_size
+			if next > max_pos {
 				if wrap == false {
-					return from
+					return pos
 				}
-				return min
+				return min_pos
 			}
 			return next
 		},
 		"synopsis": func(s string) string {
 			return doc.Synopsis(s)
 		},
-		"encodeURIComponent": func(s string) string {
+		"urlencode": func(s string) string {
 			u, err := url.Parse(s)
 			if err != nil {
 				log.Printf("Bad encoding request: %s, %s\n", s, err)
@@ -273,10 +276,10 @@ var (
 		},
 	}
 
-	//Iterations produce lists that then can be applied to range function
-	Iterations = template.FuncMap{
-		// forInt returns an array of ints. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
-		"forInt": func(start, end, inc int) []int {
+	//Iterables produces lists that then can supply the template range function with values
+	Iterables = template.FuncMap{
+		// ints returns an array of int. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
+		"ints": func(start, end, inc int) []int {
 			var result []int
 			if start == end {
 				return []int{start}
@@ -291,8 +294,8 @@ var (
 			}
 			return result
 		},
-		// forInt returns an array of ints. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
-		"forInt64": func(start, end, inc int64) []int64 {
+		// int64s returns an array of int64. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
+		"int64s": func(start, end, inc int64) []int64 {
 			var result []int64
 			if start == end {
 				return []int64{start}
@@ -318,7 +321,7 @@ var (
 			}
 			return defaultVal
 		},
-		"ifDotpathExists": func(p string, data interface{}, existsVal interface{}, notExistsVal interface{}) interface{} {
+		"if_dotpath_exists": func(p string, data interface{}, existsVal interface{}, notExistsVal interface{}) interface{} {
 			if _, err := dotpath.Eval(p, data); err == nil {
 				return existsVal
 			}
@@ -352,11 +355,6 @@ func normalizeDate(in string) string {
 	return strings.Join(parts, "-")
 }
 
-// AllFuncs() returns a Join of func maps available in tmplfn
-func AllFuncs() template.FuncMap {
-	return Join(Time, Page, Math, Strings, Iterations, Dotpath)
-}
-
 // Join take one or more func maps and returns an aggregate one.
 func Join(maps ...template.FuncMap) template.FuncMap {
 	result := make(template.FuncMap)
@@ -368,29 +366,107 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 	return result
 }
 
-// Assemble support a very simple template setup of an outer HTML file with a content include
-// along with common template functions.
-func Assemble(tmplFuncs template.FuncMap, templateFilenames ...string) (*template.Template, error) {
-	if len(templateFilenames) > 0 {
-		return template.New(path.Base(templateFilenames[0])).Funcs(tmplFuncs).ParseFiles(templateFilenames...)
+// AllFuncs() returns a Join of func maps available in tmplfn
+func AllFuncs() template.FuncMap {
+	return Join(Time, Page, Math, Strings, Iterables, Dotpath)
+}
+
+// Src is a mapping of template source to names and byte arrays.
+// It is useful to create a series of defaults templates that can be
+// overwritten by user supplied template files.
+type Tmpl struct {
+	// Templates pointes as a template.Template (e.g. html or text template.Template)
+	Template *template.Template
+	// Code holds a map of names to byte arrays, the byte arrays hold the template source code
+	// the names can be either filename or other names defined by the implementor
+	Code map[string][]byte
+}
+
+// NewTmpl creates a pointer to a template.Template and  empty map of names to byte arrays
+// pointing at an empty byte array
+func NewTmpl() *Tmpl {
+	return &Tmpl{
+		Template: nil,
+		Code:     map[string][]byte{},
 	}
-	return nil, fmt.Errorf("No template names specified")
 }
 
-// AssembleString like Assemble but using a string as a source for the template
-func AssembleString(tmplFuncs template.FuncMap, src string) (*template.Template, error) {
-	return template.New("master").Funcs(tmplFuncs).Parse(src)
-}
-
-// AssembleTemplateMap takes a map of template names and source and returns a map of template names and templates
-func AssembleTemplateMap(tmplFuncs template.FuncMap, templateSrcMap map[string]string) (map[string]*template.Template, error) {
-	tmpls := map[string]*template.Template{}
-	for tName, tSrc := range templateSrcMap {
-		if tmpl, err := template.New(tName).Funcs(tmplFuncs).Parse(tSrc); err == nil {
-			tmpls[tName] = tmpl
+// ReadFiles takes the given file or directory name(s) and reads the byte array(s)
+// into the Code map.  If a filename is a directory then the directory is scanned
+// for files ending in ".tmpl" and those are loaded into the Code map. It does
+// NOT parse/assemble templates.
+func (t *Tmpl) ReadFiles(fNames ...string) error {
+	for _, fname := range fNames {
+		if info, err := os.Stat(fname); err != nil {
+			return err
+		} else if info.IsDir() == true {
+			if files, err := ioutil.ReadDir(fname); err != nil {
+				return err
+			} else {
+				for _, file := range files {
+					pname := path.Join(fname, file.Name())
+					ext := path.Ext(pname)
+					if file.IsDir() != true && ext == ".tmpl" {
+						if src, err := ioutil.ReadFile(pname); err != nil {
+							return err
+						} else {
+							t.Code[pname] = src
+						}
+					}
+				}
+			}
+		} else if src, err := ioutil.ReadFile(fname); err != nil {
+			return err
 		} else {
-			return nil, fmt.Errorf("%s parse error, %s", tName, err)
+			t.Code[fname] = src
 		}
 	}
-	return tmpls, nil
+	return nil
+}
+
+// Merge takes a map of names pointing at byte arrays and merges that with
+// existing Code property overwritting previous contents when necessary.
+func (t Tmpl) Merge(srcs map[string][]byte) error {
+	for k, v := range srcs {
+		t.Code[k] = v
+		if _, ok := t.Code[k]; ok == false {
+			return fmt.Errorf("Can't add/update %s", k)
+		}
+	}
+	return nil
+}
+
+// Assemble takes a map of template functions creates a new Tmpl.Template
+// property and parses the sources in Tmpl.Code map.
+func (t Tmpl) Assemble(tmplFuncs template.FuncMap) error {
+	var err error
+
+	// Assemble always creates a new master template with the provided templFuncs
+	// Next it parses all the source code in Code property.
+	t.Template, err = template.New("master").Funcs(tmplFuncs).Parse("")
+	if err != nil {
+		return err
+	}
+
+	for tName, tSrc := range t.Code {
+		// We use the "master" template for subsequent New calls to associate
+		// with other templates.  The new template is associated with t.
+		tmpl := t.Template.New(tName)
+		src := string(tSrc)
+		// Now that we're setup let's parse the source for tName.
+		_, err = tmpl.Parse(src)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Execute checks to see the Tmpl.Template is not nil and then
+// calls *template.Template.Execute() returning any errors.
+func (t *Tmpl) Execute(out io.Writer, data *interface{}) error {
+	if t.Template == nil {
+		return fmt.Errorf("template has not been assembled yet")
+	}
+	return t.Template.Execute(out, data)
 }
