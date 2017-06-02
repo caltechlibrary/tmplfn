@@ -174,7 +174,7 @@ var (
 		"modulo":   numbers.Modulo,
 		"addi":     numbers.Addi,
 		"subi":     numbers.Subtract,
-		"getType": func(t interface{}) string {
+		"typeof": func(t interface{}) string {
 			switch tp := t.(type) {
 			default:
 				return fmt.Sprintf("%T", tp)
