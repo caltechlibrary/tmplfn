@@ -275,7 +275,7 @@ var (
 		},
 	}
 
-	//Iterables produces lists that then can supply the template range function with values
+	// Iterables produces lists that then can supply the template range function with values
 	Iterables = template.FuncMap{
 		// ints returns an array of int. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
 		"ints": func(start, end, inc int) []int {
@@ -309,6 +309,38 @@ var (
 			}
 			return result
 		},
+		// float32s returns an array of float32. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
+		"float32s": func(start, end, inc float32) []float32 {
+			var result []float32
+			if start == end {
+				return []float32{start}
+			} else if start < end {
+				for i := start; i <= end; i = i + inc {
+					result = append(result, i)
+				}
+			} else {
+				for i := end; i >= start; i = i - inc {
+					result = append(result, i)
+				}
+			}
+			return result
+		},
+		// float64s returns an array of float64. Both start and end are inclusive. If start <= end the ascending by inc else descending by inc
+		"float64s": func(start, end, inc float64) []float64 {
+			var result []float64
+			if start == end {
+				return []float64{start}
+			} else if start < end {
+				for i := start; i <= end; i = i + inc {
+					result = append(result, i)
+				}
+			} else {
+				for i := end; i >= start; i = i - inc {
+					result = append(result, i)
+				}
+			}
+			return result
+		},
 	}
 
 	//Dotpath methods from datatools/dotpath in templates
@@ -320,7 +352,7 @@ var (
 			}
 			return defaultVal
 		},
-		"if_dotpath_exists": func(p string, data interface{}, existsVal interface{}, notExistsVal interface{}) interface{} {
+		"has_dotpath": func(p string, data interface{}, existsVal interface{}, notExistsVal interface{}) interface{} {
 			if _, err := dotpath.Eval(p, data); err == nil {
 				return existsVal
 			}
