@@ -388,7 +388,7 @@ func normalizeDate(in string) string {
 
 // Join take one or more func maps and returns an aggregate one.
 func Join(maps ...template.FuncMap) template.FuncMap {
-	result := make(template.FuncMap)
+	result := template.FuncMap{}
 	for _, m := range maps {
 		for key, fn := range m {
 			result[key] = fn
@@ -399,7 +399,7 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 
 // AllFuncs() returns a Join of func maps available in tmplfn
 func AllFuncs() template.FuncMap {
-	return Join(Time, Page, Math, Strings, Iterables, Dotpath)
+	return Join(Dotpath, Iterables, Math, Page, Strings, Time)
 }
 
 // Src is a mapping of template source to names and byte arrays.
