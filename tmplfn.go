@@ -359,6 +359,19 @@ var (
 			return notExistsVal
 		},
 	}
+
+	// Console holds functions that interact with the console where
+	// the template processing is happening (e.g. for a web service
+	// writing to the console log of the web server).
+	Console = template.FuncMap{
+		// writelog writes something to the log using Log.Println()
+		// it returns an empty string because template Funcs need to
+		// return something.
+		"writelog": func(v ...interface{}) string {
+			log.Println(v...)
+			return ""
+		},
+	}
 )
 
 // normalizeDate takes a expands years to four digits, month and day to two digits
@@ -399,7 +412,7 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 
 // AllFuncs() returns a Join of func maps available in tmplfn
 func AllFuncs() template.FuncMap {
-	return Join(Dotpath, Iterables, Math, Page, Strings, Time)
+	return Join(Console, Dotpath, Iterables, Math, Page, Strings, Time)
 }
 
 // Src is a mapping of template source to names and byte arrays.
