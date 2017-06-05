@@ -491,6 +491,9 @@ func (t Tmpl) ReadMap(sourceMap map[string][]byte) error {
 			t.Code[tname] = src
 		}
 	}
+	if len(t.Code) == 0 {
+		return fmt.Errorf("No templates found")
+	}
 	return nil
 }
 
