@@ -231,13 +231,16 @@ var (
 		"synopsis": func(s string) string {
 			return doc.Synopsis(s)
 		},
-		"urlencode": func(s string) string {
-			u, err := url.Parse(s)
+		"urldecode": func(s string) string {
+			sDecoded, err := url.QueryUnescape(s)
 			if err != nil {
-				log.Printf("Bad encoding request: %s, %s\n", s, err)
+				log.Printf("Bad encoding request: %q, %s\n", s, err)
 				return ""
 			}
-			return strings.Replace(u.String(), "&", "%26", -1)
+			return sDecoded
+		},
+		"urlencode": func(s string) string {
+			return url.QueryEscape(s)
 		},
 		"stringify": func(data interface{}, prettyPrint bool) string {
 			if prettyPrint == true {
