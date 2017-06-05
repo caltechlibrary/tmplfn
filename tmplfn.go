@@ -482,12 +482,13 @@ func (t Tmpl) Add(name string, src []byte) error {
 	return nil
 }
 
-// Merge takes a map of names pointing at byte arrays and merges that with
-// existing Code property overwritting previous contents when necessary.
-func (t Tmpl) Merge(srcs map[string][]byte) error {
-	for name, src := range srcs {
-		if err := t.Add(name, src); err != nil {
-			return err
+// ReadMap works like ReadFiles but takes the name/source pairs from a map rather
+// than the file system.
+func (t Tmpl) ReadMap(sourceMap map[string][]byte) error {
+	for pname, src := range sourceMap {
+		ext := path.Ext(pname)
+		if ext == ".tmpl" {
+			t.Code[pname] = src
 		}
 	}
 	return nil
