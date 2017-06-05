@@ -483,12 +483,12 @@ func (t Tmpl) Add(name string, src []byte) error {
 }
 
 // ReadMap works like ReadFiles but takes the name/source pairs from a map rather
-// than the file system.
+// than the file system. It expected template names to end in ".tmpl" like ReadFiles()
 func (t Tmpl) ReadMap(sourceMap map[string][]byte) error {
-	for pname, src := range sourceMap {
-		ext := path.Ext(pname)
+	for tname, src := range sourceMap {
+		ext := path.Ext(tname)
 		if ext == ".tmpl" {
-			t.Code[pname] = src
+			t.Code[tname] = src
 		}
 	}
 	return nil
