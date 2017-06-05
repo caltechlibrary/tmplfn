@@ -205,3 +205,30 @@ func TestTempleExec(t *testing.T) {
 		t.Errorf("%s", err)
 	}
 }
+
+func TestURLEncodeDecode(t *testing.T) {
+	if fn, ok := Page["urlencode"]; ok == true {
+		urlencode := fn.(func(string) string)
+		input := `-name:"Jack" -name:"Flanders"`
+		expected := "-name%3A%22Jack%22+-name%3A%22Flanders%22"
+		output := urlencode(input)
+		if expected != output {
+			t.Errorf("expected %q, got %s", expected, output)
+		}
+	} else {
+		t.Errorf("Can't get function urlencode from Page map")
+	}
+
+	if fn, ok := Page["urldecode"]; ok == true {
+		urldecode := fn.(func(string) string)
+		input := "-name%3A%22Jack%22+-name%3A%22Flanders%22"
+		expected := `-name:"Jack" -name:"Flanders"`
+		output := urldecode(input)
+		if expected != output {
+			t.Errorf("expected %q, got %s", expected, output)
+		}
+	} else {
+		t.Errorf("Can't get function urldecode from Page map")
+	}
+
+}
