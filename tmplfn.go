@@ -439,41 +439,45 @@ func New(fm template.FuncMap) *Tmpl {
 	}
 }
 
-// ReadFiles takes the given file or directory name(s) and reads the byte array(s)
+// ReadFiles takes the given file, filenames or directory name(s) and reads the byte array(s)
 // into the Code map.  If a filename is a directory then the directory is scanned
 // for files ending in ".tmpl" and those are loaded into the Code map. It does
-// NOT parse/assemble templates.
+// NOT parse/assemble templates. The basename in the path is used as the name
+// of the template (e.g. templates/page.tmpl would be stored as page.tmpl.
 func (t *Tmpl) ReadFiles(fNames ...string) error {
 	for _, fname := range fNames {
 		if info, err := os.Stat(fname); err != nil {
 			return err
 		} else if info.IsDir() == true {
-			if files, err := ioutil.ReadDir(fname); err != nil {
-				return err
-			} else {
+			if files, err := ioutil.ReadDir(fname); err == nil {
 				for _, file := range files {
+					tname := path.Base(file.Name())
 					pname := path.Join(fname, file.Name())
 					ext := path.Ext(pname)
 					if file.IsDir() != true && ext == ".tmpl" {
 						if src, err := ioutil.ReadFile(pname); err != nil {
 							return err
 						} else {
-							t.Code[pname] = src
+							t.Code[tname] = src
 						}
 					}
 				}
+			} else {
+				return err
 			}
-		} else if src, err := ioutil.ReadFile(fname); err != nil {
-			return err
+		} else if src, err := ioutil.ReadFile(fname); err == nil {
+			tname := path.Base(fname)
+			t.Code[tname] = src
 		} else {
-			t.Code[fname] = src
+			return err
 		}
 	}
 	return nil
 }
 
 // Add takes a name and source (byte array) and updates t.Code with it.
-// It is like Merge but for a single file.
+// It is like Merge but for a single file. The name provided in Add is
+// used as the key to the template source code map.
 func (t Tmpl) Add(name string, src []byte) error {
 	t.Code[name] = src
 	if _, ok := t.Code[name]; ok != true {
@@ -484,8 +488,11 @@ func (t Tmpl) Add(name string, src []byte) error {
 
 // ReadMap works like ReadFiles but takes the name/source pairs from a map rather
 // than the file system. It expected template names to end in ".tmpl" like ReadFiles()
+// Note the basename of the key provided in the sourceMap is used as the key
+// in the Code source code map (e.g. /templates/page.tmpl is stored as page.tmpl)
 func (t Tmpl) ReadMap(sourceMap map[string][]byte) error {
-	for tname, src := range sourceMap {
+	for fname, src := range sourceMap {
+		tname := path.Base(fname)
 		ext := path.Ext(tname)
 		if ext == ".tmpl" {
 			t.Code[tname] = src
