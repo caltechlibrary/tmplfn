@@ -198,7 +198,11 @@ var (
 		"join": func(li []interface{}, sep string) string {
 			var l []string
 			for _, item := range li {
-				l = append(l, fmt.Sprintf("%s", item))
+				if item == nil {
+					l = append(l, "")
+				} else {
+					l = append(l, fmt.Sprintf("%s", item))
+				}
 			}
 			return strings.Join(l, sep)
 		},
