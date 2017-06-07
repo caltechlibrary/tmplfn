@@ -183,18 +183,15 @@ var (
 	}
 
 	Strings = template.FuncMap{
-		"prefix": func(s, substring string) bool {
-			return strings.HasPrefix(s, substring)
-		},
-		"contains": func(s, substring string) bool {
-			return strings.Contains(s, substring)
-		},
-		"suffix": func(s, substring string) bool {
-			return strings.HasSuffix(s, substring)
-		},
-		"title": func(s string) string {
-			return strings.Title(s)
-		},
+		"has_prefix":  strings.HasPrefix,
+		"has_suffix":  strings.HasSuffix,
+		"contains":    strings.Contains,
+		"trim_prefix": strings.TrimPrefix,
+		"trim_suffix": strings.TrimSuffix,
+		"lowercase":   strings.ToLower,
+		"uppercase":   strings.ToUpper,
+		"title":       strings.Title,
+		"replace":     strings.Replace,
 		"join": func(li []interface{}, sep string) string {
 			var l []string
 			for _, item := range li {
@@ -350,6 +347,25 @@ var (
 		},
 	}
 
+	//Path methods for working with paths (E.g. path.Base(), path.Ext() and path.Dir() in Go path package)
+	Path = template.FuncMap{
+		// basename works similar to Unix command and will trim any extensions provided in additional to the path
+		"basename": func(args ...string) string {
+			p := path.Base(args[0])
+			if len(args) > 2 {
+				for _, ext := range args[1:] {
+					if strings.HasSuffix(p, ext) {
+						p = strings.TrimSuffix(p, ext)
+					}
+				}
+			}
+			return p
+		},
+		"base": path.Base,
+		"ext":  path.Ext,
+		"dir":  path.Dir,
+	}
+
 	//Dotpath methods from datatools/dotpath in templates
 	Dotpath = template.FuncMap{
 		//dotpath takes a dot path, default for fail and data returning the results of default value
@@ -419,7 +435,7 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 
 // AllFuncs() returns a Join of func maps available in tmplfn
 func AllFuncs() template.FuncMap {
-	return Join(Console, Dotpath, Iterables, Math, Page, Strings, Time)
+	return Join(Console, Dotpath, Iterables, Math, Page, Path, Strings, Time)
 }
 
 // Src is a mapping of template source to names and byte arrays.
