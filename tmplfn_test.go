@@ -232,3 +232,23 @@ func TestURLEncodeDecode(t *testing.T) {
 	}
 
 }
+
+func TestPath(t *testing.T) {
+	if fn, ok := Path["basename"]; ok == true {
+		basename := fn.(func(...string) string)
+		input := "/one/two/three.bleve"
+		expected := "three.bleve"
+		output := basename(input)
+		if expected != output {
+			t.Errorf("expected %q, got %s", expected, output)
+		}
+		expected = "three"
+		output = basename(input, ".bleve")
+		if expected != output {
+			t.Errorf("expected %q, got %s", expected, output)
+		}
+
+	} else {
+		t.Errorf("Can't get function basename from Path map")
+	}
+}

@@ -352,7 +352,7 @@ var (
 		// basename works similar to Unix command and will trim any extensions provided in additional to the path
 		"basename": func(args ...string) string {
 			p := path.Base(args[0])
-			if len(args) > 2 {
+			if len(args) > 1 {
 				for _, ext := range args[1:] {
 					if strings.HasSuffix(p, ext) {
 						p = strings.TrimSuffix(p, ext)
