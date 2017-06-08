@@ -435,7 +435,7 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 
 // AllFuncs() returns a Join of func maps available in tmplfn
 func AllFuncs() template.FuncMap {
-	return Join(Console, Dotpath, Iterables, Math, Page, Path, Strings, Time)
+	return Join(Console, Dotpath, Iterables, Math, Page, Markdown, Path, Strings, Time)
 }
 
 // Src is a mapping of template source to names and byte arrays.
