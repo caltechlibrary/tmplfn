@@ -252,3 +252,35 @@ func TestPath(t *testing.T) {
 		t.Errorf("Can't get function basename from Path map")
 	}
 }
+
+func TestTypeOf(t *testing.T) {
+	if fn, ok := Math["typeof"]; ok == true {
+		typeof := fn.(func(interface{}) string)
+		input1 := "Hello World"
+		expected := "string"
+		result := typeof(input1)
+		if expected != result {
+			t.Errorf("Expected %s, got %s", expected, result)
+		}
+		input2 := []string{
+			"one",
+			"two",
+			"three",
+		}
+		expected = "[]string"
+		result = typeof(input2)
+		if expected != result {
+			t.Errorf("Expected %s, got %s", expected, result)
+		}
+		var input3 interface{}
+		input3 = input2
+		expected = "[]string"
+		result = typeof(input3)
+		if expected != result {
+			t.Errorf("Expected %s, got %s", expected, result)
+		}
+
+	} else {
+		t.Errorf("Can't get function typeof from Math map")
+	}
+}

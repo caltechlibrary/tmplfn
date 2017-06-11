@@ -40,7 +40,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.11`
+	Version = `v0.0.12`
 
 	// Time provides a common set of time/date related functions for use in text/template or html/template
 	Time = template.FuncMap{
@@ -175,10 +175,7 @@ var (
 		"addi":     numbers.Addi,
 		"subi":     numbers.Subtract,
 		"typeof": func(t interface{}) string {
-			switch tp := t.(type) {
-			default:
-				return fmt.Sprintf("%T", tp)
-			}
+			return fmt.Sprintf("%T", t)
 		},
 	}
 
