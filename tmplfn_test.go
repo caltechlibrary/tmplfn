@@ -290,3 +290,35 @@ func TestTypeOf(t *testing.T) {
 		t.Errorf("Can't get function typeof from Math map")
 	}
 }
+
+func TestCols2Rows(t *testing.T) {
+	if fn, ok := Iterables["cols2rows"]; ok == true {
+		names_family := []interface{}{
+			"Doiel",
+			"Morrel",
+			"Keswick",
+		}
+		names_given := []interface{}{
+			"Robert",
+			"Tom",
+			"Tommy",
+		}
+		cols2rows := fn.(func(...[]interface{}) [][]interface{})
+		tbl := cols2rows([]interface{}(names_family), []interface{}(names_given))
+		for i := 0; i < len(tbl); i++ {
+			if len(tbl[i]) != 2 {
+				t.Errorf("expected 2 rows, got %d", len(tbl))
+			} else {
+				if tbl[i][0] != names_family[i] {
+					t.Errorf("expected %d, got %d", names_family[i], tbl[i][0])
+				}
+				if tbl[i][1] != names_given[i] {
+					t.Errorf("expected %d, got %d", names_given[i], tbl[i][1])
+				}
+			}
+		}
+	} else {
+		t.Errorf("Can't get function cols2rows from Iterable map")
+	}
+
+}

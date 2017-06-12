@@ -345,6 +345,39 @@ var (
 			}
 			return result
 		},
+		// cols2rows takes a list of columns and returns a 2d array of rows and columns
+		// number of rows will match the largest number of cells in the columns included, empty/missing cells will
+		// be added using an empty string
+		"cols2rows": func(cols ...[]interface{}) [][]interface{} {
+			var (
+				row     []interface{}
+				rows    [][]interface{}
+				maxRows int
+			)
+			// Find the max rows
+			for _, col := range cols {
+				if len(col) >= maxRows {
+					maxRows = len(col)
+				}
+			}
+			// From zero to maxRows assemble a row and add to rows
+			for i := 0; i < maxRows; i++ {
+				// reset row
+				row = []interface{}{}
+				// build row
+				for _, col := range cols {
+					if i < len(col) {
+						row = append(row, col[i])
+					} else {
+						row = append(row, "")
+					}
+				}
+				// add row to rows
+				rows = append(rows, row)
+			}
+			// For each column add a cell to the row
+			return rows
+		},
 	}
 
 	//Path methods for working with paths (E.g. path.Base(), path.Ext() and path.Dir() in Go path package)
