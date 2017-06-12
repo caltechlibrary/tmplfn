@@ -175,6 +175,9 @@ var (
 		"addi":     numbers.Addi,
 		"subi":     numbers.Subtract,
 		"typeof": func(t interface{}) string {
+			if t == nil {
+				return "<nil>"
+			}
 			return fmt.Sprintf("%T", t)
 		},
 	}

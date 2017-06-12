@@ -280,6 +280,12 @@ func TestTypeOf(t *testing.T) {
 			t.Errorf("Expected %s, got %s", expected, result)
 		}
 
+		input3 = nil
+		expected = "<nil>"
+		result = typeof(input3)
+		if expected != result {
+			t.Errorf("Expected %s, got %s", expected, result)
+		}
 	} else {
 		t.Errorf("Can't get function typeof from Math map")
 	}
