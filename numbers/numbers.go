@@ -37,7 +37,7 @@ func numberType(value interface{}) int {
 	}
 }
 
-// toType converts an interface to the targetType (most by a float64Type, float32Type, int64Type or intType)
+// toType converts an interface to the targetType (must be a float64Type, float32Type, int64Type or intType)
 func toType(v interface{}, targetType int) interface{} {
 	var (
 		a     interface{}
