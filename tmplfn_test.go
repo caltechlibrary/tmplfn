@@ -320,5 +320,72 @@ func TestCols2Rows(t *testing.T) {
 	} else {
 		t.Errorf("Can't get function cols2rows from Iterable map")
 	}
+}
 
+func TestDotpath(t *testing.T) {
+	src := []byte(`{
+	"family_names": {
+		"value": "Steinbeck"
+	},
+	"given_name": {
+		"value": "John"
+	}
+}`)
+
+	data := map[string]interface{}{}
+
+	if err := json.Unmarshal(src, &data); err != nil {
+		t.Errorf("Can't unmarshal test data, %s", err)
+		t.FailNow()
+	}
+
+	if fn, ok := Dotpath["has_dotpath"]; ok == true {
+		hasDotpath := fn.(func(string, interface{}, interface{}, interface{}) interface{})
+		if val := hasDotpath("family_names.value", data, true, false); val.(bool) != true {
+			t.Errorf("expected true, got %t", val.(bool))
+		}
+		if val := hasDotpath("display_name.value", data, true, false); val.(bool) != false {
+			t.Errorf("expected false got %t", val.(bool))
+		}
+	} else {
+		t.Errorf("Can't get function has_dotpath")
+	}
+	if fn, ok := Dotpath["dotpath"]; ok == true {
+		dotpathfn := fn.(func(string, interface{}, interface{}) interface{})
+		if val := dotpathfn("family_names.value", data, ""); val.(string) != "Steinbeck" {
+			t.Errorf("expected Steinbeck, got %q", val.(string))
+		}
+		if val := dotpathfn("display_name.value", data, ""); val.(string) != "" {
+			t.Errorf("expected empty string got %q", val.(string))
+		}
+	} else {
+		t.Errorf("Can't get function has_dotpath")
+	}
+
+}
+
+func TestBooleans(t *testing.T) {
+	if fn, ok := Booleans["count_true"]; ok == true {
+		countTrue := fn.(func(...bool) int)
+		if i := countTrue(true); i != 1 {
+			t.Errorf("expected 1, got %d", i)
+		}
+		if i := countTrue(false); i != 0 {
+			t.Errorf("expected 0, got %d", i)
+		}
+		if i := countTrue(true, false); i != 1 {
+			t.Errorf("expected 1, got %d", i)
+		}
+		if i := countTrue(false, false); i != 0 {
+			t.Errorf("expected 0, got %d", i)
+		}
+		if i := countTrue(true, false, true); i != 2 {
+			t.Errorf("expected 2, got %d", i)
+		}
+		if i := countTrue(false, false, true); i != 1 {
+			t.Errorf("expected 1, got %d", i)
+		}
+	} else {
+		t.Errorf("Can't get function count_true")
+	}
 }

@@ -34,7 +34,7 @@ import (
 	"time"
 
 	// Caltech Library Packages
-	"github.com/caltechlibrary/datatools/dotpath"
+	"github.com/caltechlibrary/dotpath"
 	"github.com/caltechlibrary/tmplfn/numbers"
 )
 
@@ -380,6 +380,21 @@ var (
 		},
 	}
 
+	//Booleans provides a set of functions working with Boolean data
+	Booleans = template.FuncMap{
+		// CountTrue takes one or more booling variables and counts the ones which are true.
+		// returns an integer
+		"count_true": func(booleans ...bool) int {
+			cnt := 0
+			for _, val := range booleans {
+				if val == true {
+					cnt++
+				}
+			}
+			return cnt
+		},
+	}
+
 	//Path methods for working with paths (E.g. path.Base(), path.Ext() and path.Dir() in Go path package)
 	Path = template.FuncMap{
 		// basename works similar to Unix command and will trim any extensions provided in additional to the path
@@ -401,13 +416,16 @@ var (
 
 	//Dotpath methods from datatools/dotpath in templates
 	Dotpath = template.FuncMap{
-		//dotpath takes a dot path, default for fail and data returning the results of default value
+		//dotpath takes a dot path (string), the data to operate on (e.g. map[string]interface{}) and default data to return on fail,
+		// dotpath returns the dot path result on success or the default fail value if not.
 		"dotpath": func(p string, data interface{}, defaultVal interface{}) interface{} {
 			if val, err := dotpath.Eval(p, data); err == nil {
 				return val
 			}
 			return defaultVal
 		},
+		// has_dotpath takes a dot path (string), the data to check, the value to return if DOES exists and the value to return if NOT exists)
+		// the return value will be either the exists value or does not exist value
 		"has_dotpath": func(p string, data interface{}, existsVal interface{}, notExistsVal interface{}) interface{} {
 			if _, err := dotpath.Eval(p, data); err == nil {
 				return existsVal
@@ -468,7 +486,7 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 
 // AllFuncs() returns a Join of func maps available in tmplfn
 func AllFuncs() template.FuncMap {
-	return Join(Console, Dotpath, Iterables, Math, Page, Markdown, Path, Strings, Time)
+	return Join(Booleans, Console, Dotpath, Iterables, Math, Page, Markdown, Path, Strings, Time)
 }
 
 // Src is a mapping of template source to names and byte arrays.

@@ -9,6 +9,7 @@
 
 ## Someday, Maybe
 
++ [ ] Re-organize code so tmplfn.go holds the text template mappings but function collections are their own packages
 + [ ] Review other template function systems, align with their names and parameters where it makes sense
 + [ ] Implement a simpler dotpath function than how Go template's index function works
 + [ ] Add a codeblock function that will read in a file (with optional line range) and render a code example like tripple back tick does in Markdown
