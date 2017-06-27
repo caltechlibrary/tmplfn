@@ -14,7 +14,7 @@ func TestFilter(t *testing.T) {
 	}
 
 	expected := true
-	filter_src := []byte(`(and .one .two)`)
+	filter_src := `(and .one .two)`
 	filter, err := ParseFilter(filter_src)
 	if err != nil {
 		t.Error(err)
@@ -39,7 +39,7 @@ func TestFilter(t *testing.T) {
 		`(or .one .three)`:                  true,
 		`(and .one .two (eq .three false))`: true,
 	} {
-		filter_src = []byte(src)
+		filter_src = src
 		filter, err := ParseFilter(filter_src)
 		if err != nil {
 			t.Errorf("Can't parse filter source: %q, %s", filter_src, err)

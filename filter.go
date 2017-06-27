@@ -13,7 +13,7 @@ type Filter struct {
 }
 
 // ParseFilter parses a byte slice and returns a Filter struct and error
-func ParseFilter(src []byte) (*Filter, error) {
+func ParseFilter(src string) (*Filter, error) {
 	tmpl, err := template.New("filter").Funcs(AllFuncs()).Parse(fmt.Sprintf("{{- if %s -}}true{{- else -}}false{{- end -}}", src))
 	if err != nil {
 		return nil, err
