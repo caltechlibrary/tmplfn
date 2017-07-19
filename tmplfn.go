@@ -40,7 +40,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.14`
+	Version = `v0.0.15`
 
 	// Time provides a common set of time/date related functions for use in text/template or html/template
 	Time = template.FuncMap{
@@ -414,6 +414,31 @@ var (
 		"dir":  path.Dir,
 	}
 
+	//Url methods are for working with URLs and extracting useful parts
+	Url = template.FuncMap{
+		// return the scheme (e.g. https, http) of URL
+		"url_scheme": func(args ...string) string {
+			if u, err := url.Parse(args[0]); err == nil {
+				return u.Scheme
+			}
+			return ""
+		},
+		// return the host (e.g. example.org ) of URL
+		"url_host": func(args ...string) string {
+			if u, err := url.Parse(args[0]); err == nil {
+				return u.Host
+			}
+			return ""
+		},
+		// return the path (e.g. /about/index.html ) of URL
+		"url_path": func(args ...string) string {
+			if u, err := url.Parse(args[0]); err == nil {
+				return u.Path
+			}
+			return ""
+		},
+	}
+
 	//Dotpath methods from datatools/dotpath in templates
 	Dotpath = template.FuncMap{
 		//dotpath takes a dot path (string), the data to operate on (e.g. map[string]interface{}) and default data to return on fail,
@@ -486,7 +511,7 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 
 // AllFuncs() returns a Join of func maps available in tmplfn
 func AllFuncs() template.FuncMap {
-	return Join(Booleans, Console, Dotpath, Iterables, Math, Page, Markdown, Path, Strings, Time)
+	return Join(Booleans, Console, Dotpath, Iterables, Math, Page, Markdown, Path, Strings, Time, Url)
 }
 
 // Src is a mapping of template source to names and byte arrays.

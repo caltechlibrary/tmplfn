@@ -389,3 +389,22 @@ func TestBooleans(t *testing.T) {
 		t.Errorf("Can't get function count_true")
 	}
 }
+
+func TestUrl(t *testing.T) {
+	u := "https://example.org/about/index.html"
+	testSet := map[string]string{
+		"url_scheme": "https",
+		"url_host":   "example.org",
+		"url_path":   "/about/index.html",
+	}
+	for fnName, expected := range testSet {
+		if fn, ok := Url[fnName]; ok == true {
+			method := fn.(func(...string) string)
+			if s := method(u); s != expected {
+				t.Errorf("%s -> expected %q, got %q", fnName, expected, s)
+			}
+		} else {
+			t.Errorf("Missing Url[%q]", fnName)
+		}
+	}
+}
