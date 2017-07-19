@@ -408,3 +408,21 @@ func TestUrl(t *testing.T) {
 		}
 	}
 }
+
+func TestConcat(t *testing.T) {
+	testSet := map[string][]string{
+		"https://example.org": []string{"https://", "example.org"},
+		"one,two and three":   []string{"one", ",", "two", " and three"},
+	}
+	fnName := "concat"
+	for expected, args := range testSet {
+		if fn, ok := Strings["concat"]; ok == true {
+			method := fn.(func(...string) string)
+			if s := method(args...); s != expected {
+				t.Errorf("%s -> expected %q, got %q", fnName, expected, s)
+			}
+		} else {
+			t.Errorf("Missing Url[%q]", fnName)
+		}
+	}
+}

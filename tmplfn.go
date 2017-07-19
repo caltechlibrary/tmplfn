@@ -183,6 +183,11 @@ var (
 	}
 
 	Strings = template.FuncMap{
+		// concat concatenates strings together
+		"concat": func(strs ...string) string {
+			return strings.Join(strs, "")
+		},
+		// has_prefix returns true if prefix matches, false otherwise
 		"has_prefix":  strings.HasPrefix,
 		"has_suffix":  strings.HasSuffix,
 		"contains":    strings.Contains,
@@ -192,6 +197,7 @@ var (
 		"uppercase":   strings.ToUpper,
 		"title":       strings.Title,
 		"replace":     strings.Replace,
+		// join joins an array of strings with separator
 		"join": func(li []interface{}, sep string) string {
 			var l []string
 			for _, item := range li {
