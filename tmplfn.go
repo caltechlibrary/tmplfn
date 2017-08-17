@@ -384,6 +384,27 @@ var (
 			// For each column add a cell to the row
 			return rows
 		},
+		// length take a length of a string or array of byte, runes, int, int64, float64, bool. It'll
+		// return zero if it isn't one of those types.
+		"length": func(arg interface{}) int {
+			switch arg.(type) {
+			case string:
+				return len(arg.(string))
+			case []byte:
+				return len(arg.([]byte))
+			case []rune:
+				return len(arg.([]rune))
+			case []int:
+				return len(arg.([]int))
+			case []int64:
+				return len(arg.([]int64))
+			case []float64:
+				return len(arg.([]float64))
+			case []bool:
+				return len(arg.([]float64))
+			}
+			return 0
+		},
 	}
 
 	//Booleans provides a set of functions working with Boolean data
