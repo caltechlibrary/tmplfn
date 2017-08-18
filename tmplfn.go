@@ -384,8 +384,7 @@ var (
 			// For each column add a cell to the row
 			return rows
 		},
-		// length take a length of a string or array of byte, runes, int, int64, float64, bool. It'll
-		// return zero if it isn't one of those types.
+		// length returns the length of an array of basic types or string, if the array is nil it returns 0
 		"length": func(arg interface{}) int {
 			switch arg.(type) {
 			case string:
