@@ -520,6 +520,9 @@ func normalizeDate(in string) string {
 		} else {
 			parts[i] = fmt.Sprintf("%0.2d", x)
 		}
+		if parts[i] == "00" {
+			parts[i] = "01"
+		}
 	}
 	return strings.Join(parts, "-")
 }

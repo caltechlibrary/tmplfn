@@ -426,3 +426,10 @@ func TestConcat(t *testing.T) {
 		}
 	}
 }
+
+func TestNormalizeDate(t *testing.T) {
+	s := normalizeDate("2017-08-00")
+	if s != "2017-08-01" {
+		t.Errorf("Expected 2017-08-01, got %q", s)
+	}
+}
