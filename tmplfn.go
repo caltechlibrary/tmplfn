@@ -59,6 +59,22 @@ var (
 			}
 			return dt.Format("2006")
 		},
+		// timefmt normalizes and formates a datetime string, s, using fmt
+		"timefmt": func(s string, fmt string) string {
+			var (
+				dt  time.Time
+				err error
+			)
+			if s == "now" {
+				dt = time.Now()
+			} else {
+				dt, err = time.Parse("2006-01-02", normalizeDate(s))
+				if err != nil {
+					return ""
+				}
+			}
+			return dt.Format(fmt)
+		},
 		"rfc3339": func(s string) string {
 			var (
 				dt  time.Time
@@ -134,6 +150,7 @@ var (
 			}
 			return dt.Format(time.RFC822)
 		},
+		// datefmt FIXME: this is ugly, depreciate in favor of timefmt or rename to something appropriate
 		"datefmt": func(dt, outputFmtYMD, outputFmtYM, outputFmtY string) string {
 			var (
 				inputFmt  string
