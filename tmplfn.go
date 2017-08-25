@@ -40,7 +40,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.15`
+	Version = `v0.0.16`
 
 	// Time provides a common set of time/date related functions for use in text/template or html/template
 	Time = template.FuncMap{
@@ -225,6 +225,12 @@ var (
 				}
 			}
 			return strings.Join(l, sep)
+		},
+		"split": func(s string, delimiter string) []string {
+			return strings.Split(s, delimiter)
+		},
+		"splitN": func(s string, delimiter string, count int) []string {
+			return strings.SplitN(s, delimiter, count)
 		},
 	}
 
@@ -506,6 +512,11 @@ var (
 	// the template processing is happening (e.g. for a web service
 	// writing to the console log of the web server).
 	Console = template.FuncMap{
+		// version returns the version of the tmplfn package.
+		// this is useful when you're trying to decide what functions are available
+		"version": func() string {
+			return Version
+		},
 		// writelog writes something to the log using Log.Println()
 		// it returns an empty string because template Funcs need to
 		// return something.
