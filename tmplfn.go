@@ -40,7 +40,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.16`
+	Version = `v0.0.17`
 
 	// Time provides a common set of time/date related functions for use in text/template or html/template
 	Time = template.FuncMap{
@@ -490,17 +490,17 @@ var (
 
 	//Dotpath methods from datatools/dotpath in templates
 	Dotpath = template.FuncMap{
-		//dotpath takes a dot path (string), the data to operate on (e.g. map[string]interface{}) and default data to return on fail,
+		//dotpath takes the data to operate on (e.g. map[string]interface{}), a dot path (string) and default data to return on fail,
 		// dotpath returns the dot path result on success or the default fail value if not.
-		"dotpath": func(p string, data interface{}, defaultVal interface{}) interface{} {
+		"dotpath": func(data interface{}, p string, defaultVal interface{}) interface{} {
 			if val, err := dotpath.Eval(p, data); err == nil {
 				return val
 			}
 			return defaultVal
 		},
-		// has_dotpath takes a dot path (string), the data to check, the value to return if DOES exists and the value to return if NOT exists)
+		// has_dotpath takes the data to check, a dot path (string), the value to return if DOES exists and the value to return if NOT exists)
 		// the return value will be either the exists value or does not exist value
-		"has_dotpath": func(p string, data interface{}, existsVal interface{}, notExistsVal interface{}) interface{} {
+		"has_dotpath": func(data interface{}, p string, existsVal interface{}, notExistsVal interface{}) interface{} {
 			if _, err := dotpath.Eval(p, data); err == nil {
 				return existsVal
 			}

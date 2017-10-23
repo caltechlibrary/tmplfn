@@ -340,22 +340,22 @@ func TestDotpath(t *testing.T) {
 	}
 
 	if fn, ok := Dotpath["has_dotpath"]; ok == true {
-		hasDotpath := fn.(func(string, interface{}, interface{}, interface{}) interface{})
-		if val := hasDotpath("family_names.value", data, true, false); val.(bool) != true {
+		hasDotpath := fn.(func(interface{}, string, interface{}, interface{}) interface{})
+		if val := hasDotpath(data, "family_names.value", true, false); val.(bool) != true {
 			t.Errorf("expected true, got %t", val.(bool))
 		}
-		if val := hasDotpath("display_name.value", data, true, false); val.(bool) != false {
+		if val := hasDotpath(data, "display_name.value", true, false); val.(bool) != false {
 			t.Errorf("expected false got %t", val.(bool))
 		}
 	} else {
 		t.Errorf("Can't get function has_dotpath")
 	}
 	if fn, ok := Dotpath["dotpath"]; ok == true {
-		dotpathfn := fn.(func(string, interface{}, interface{}) interface{})
-		if val := dotpathfn("family_names.value", data, ""); val.(string) != "Steinbeck" {
+		dotpathfn := fn.(func(interface{}, string, interface{}) interface{})
+		if val := dotpathfn(data, "family_names.value", ""); val.(string) != "Steinbeck" {
 			t.Errorf("expected Steinbeck, got %q", val.(string))
 		}
-		if val := dotpathfn("display_name.value", data, ""); val.(string) != "" {
+		if val := dotpathfn(data, "display_name.value", ""); val.(string) != "" {
 			t.Errorf("expected empty string got %q", val.(string))
 		}
 	} else {
