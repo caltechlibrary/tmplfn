@@ -530,7 +530,7 @@ var (
 	// RegExp holds function that work off of Go's (not pcre) regular expression library.
 	RegExp = template.FuncMap{
 		"match": func(expr, val string) bool {
-			re := MustCompile(expr)
+			re := regexp.MustCompile(expr)
 			return re.MatchString(val)
 		},
 	}
