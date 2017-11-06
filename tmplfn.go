@@ -28,6 +28,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -490,7 +491,7 @@ var (
 
 	//Dotpath methods from datatools/dotpath in templates
 	Dotpath = template.FuncMap{
-		//dotpath takes the data to operate on (e.g. map[string]interface{}), a dot path (string) and default data to return on fail,
+		// dotpath takes the data to operate on (e.g. interface{}), a dot path (string) and default data to return on fail,
 		// dotpath returns the dot path result on success or the default fail value if not.
 		"dotpath": func(data interface{}, p string, defaultVal interface{}) interface{} {
 			if val, err := dotpath.Eval(p, data); err == nil {
@@ -523,6 +524,14 @@ var (
 		"writelog": func(v ...interface{}) string {
 			log.Println(v...)
 			return ""
+		},
+	}
+
+	// RegExp holds function that work off of Go's (not pcre) regular expression library.
+	RegExp = template.FuncMap{
+		"match": func(expr, val string) bool {
+			re := MustCompile(expr)
+			return re.MatchString(val)
 		},
 	}
 )
@@ -568,7 +577,7 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 
 // AllFuncs() returns a Join of func maps available in tmplfn
 func AllFuncs() template.FuncMap {
-	return Join(Booleans, Console, Dotpath, Iterables, Math, Page, Markdown, Path, Strings, Time, Url)
+	return Join(Booleans, Console, Dotpath, Iterables, Math, Page, Markdown, Path, Strings, Time, Url, RegExp)
 }
 
 // Src is a mapping of template source to names and byte arrays.
