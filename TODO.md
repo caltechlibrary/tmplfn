@@ -3,9 +3,8 @@
 
 ## Next
 
-+ [ ] basename, ext, dirname
 + [ ] unslug, slug
-+ [ ] englishTitle
++ [ ] english_title
 + [ ] Documentation, examples, tutorials of using tmplfn in Go as well as the functions in text/templates
     + [ ] Basic text/templates built-in functionality
     + [ ] Funtionality added by tmplfn

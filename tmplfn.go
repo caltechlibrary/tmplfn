@@ -41,7 +41,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.17`
+	Version = `v0.0.18-dev`
 
 	// Time provides a common set of time/date related functions for use in text/template or html/template
 	Time = template.FuncMap{
@@ -577,7 +577,7 @@ func Join(maps ...template.FuncMap) template.FuncMap {
 
 // AllFuncs() returns a Join of func maps available in tmplfn
 func AllFuncs() template.FuncMap {
-	return Join(Booleans, Console, Dotpath, Iterables, Math, Page, Markdown, Path, Strings, Time, Url, RegExp)
+	return Join(Booleans, Console, Dotpath, Iterables, Math, Page, Markdown, Path, Strings, Time, Url, RegExp, TextTools)
 }
 
 // Src is a mapping of template source to names and byte arrays.
