@@ -41,7 +41,7 @@ import (
 
 var (
 	// Version of tmplfn package
-	Version = `v0.0.18`
+	Version = `v0.0.19-dev`
 
 	// Time provides a common set of time/date related functions for use in text/template or html/template
 	Time = template.FuncMap{
@@ -211,6 +211,10 @@ var (
 		"contains":    strings.Contains,
 		"trim_prefix": strings.TrimPrefix,
 		"trim_suffix": strings.TrimSuffix,
+		"trimspace":   strings.TrimSpace,
+		"trim":        strings.Trim,
+		"trim_left":   strings.TrimLeft,
+		"trim_right":  strings.TrimRight,
 		"lowercase":   strings.ToLower,
 		"uppercase":   strings.ToUpper,
 		"title":       strings.Title,
