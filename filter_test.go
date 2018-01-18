@@ -5,6 +5,59 @@ import (
 	"testing"
 )
 
+func TestFilterEmptyStringComparison(t *testing.T) {
+	src := []byte(`{
+    "id": "https://authors.library.caltech.edu/id/eprint/74404",
+    "title":"Sound velocity and density of magnesiowüstites: Implications for ultralow-velocity zone topography",
+    "publication":"Geophysical Research Letters",
+    "pub_date": "2017-03-16",
+    "creators":[
+	"Wicks-J-K",
+	"Jackson-J-M",
+	"Sturhahn-W",
+	"Zhang-Dongzhou"
+],
+    "full_text_status":"public",
+    "rights":"No commercial reproduction, distribution, display or performance rights in this work are provided.",
+    "licenses":[
+	"other",
+	"other"
+],
+    "doi": "10.1002/2016GL071225"
+}`)
+
+	data := map[string]interface{}{}
+	err := json.Unmarshal(src, &data)
+	if err != nil {
+		t.Errorf("can't unmarshal %s\n%s", src, err)
+		t.FailNow()
+	}
+
+	filterExpr := `(ne .doi "")`
+	// Some sort of filter is involved
+	f, err := ParseFilter(filterExpr)
+	if err != nil {
+		t.Errorf("filter %s: %s", filterExpr, err)
+		t.FailNow()
+	}
+	isTrue, err := f.Apply(data)
+	if isTrue == false {
+		t.Errorf("filter %s: %t", filterExpr, isTrue)
+	}
+
+	filterExpr = `(eq .doi "")`
+	f, err = ParseFilter(filterExpr)
+	if err != nil {
+		t.Errorf("filter %s: %s", filterExpr, err)
+		t.FailNow()
+	}
+	isFalse, err := f.Apply(data)
+	if isFalse == true {
+		t.Errorf("filter %s: %t", filterExpr, isFalse)
+	}
+
+}
+
 func TestFilter(t *testing.T) {
 	json_src := []byte(`{ "one": true, "two": true }`)
 	rec := map[string]interface{}{}
@@ -58,7 +111,7 @@ func TestFilter(t *testing.T) {
 }
 
 func TestNumericComparisons(t *testing.T) {
-src := `[
+	src := `[
 {"Username":"one@example.org","cnt2014":1,"cnt2015":0,"cnt2016":0,"cnt2017":0,"yr2014":"2014/05/15","yr2015":"","yr2016":"","yr2017":""},
 {"Username":"two@example.org","cnt2014":0,"cnt2015":1,"cnt2016":1,"cnt2017":1,"yr2014":"","yr2015":"09-10-15","yr2016":"2016/01/07","yr2017":"2017/05/01"},
 {"Username":"three@example.org","cnt2014":0,"cnt2015":1,"cnt2016":0,"cnt2017":0,"yr2014":"","yr2015":"05-06-15","yr2016":"","yr2017":""},
