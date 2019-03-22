@@ -25,13 +25,14 @@ import (
 
 	// 3rd Party Packages
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/russross/blackfriday"
+	blackfridayV1 "github.com/russross/blackfriday"
 )
 
 var (
 	Markdown = template.FuncMap{
 		"markdown": func(input string) string {
-			unsafe := blackfriday.MarkdownCommon([]byte(input))
+			//unsafe := blackfridayV1.MarkdownCommon([]byte(input))
+			unsafe := blackfridayV1.Run([]byte(input))
 			return fmt.Sprintf("%s", bluemonday.UGCPolicy().SanitizeBytes(unsafe))
 		},
 	}
