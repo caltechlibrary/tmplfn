@@ -1,0 +1,30 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "@type": "SoftwareSourceCode",
+    "description": "A golang package wrapping go template extension functions used by Caltech Library",
+    "name": "tmplfn",
+    "codeRepository": "https://github.com/caltechlibrary/tmplfn",
+    "issueTracker": "https://github.com/caltechlibrary/tmplfn/issues",
+    "license": "https://data.caltech.edu/license",
+    "version": "0.0.19",
+    "author": [
+        {
+            "@type": "Person",
+            "givenName": "Robert",
+            "familyName": "Doiel",
+            "affiliation": "Caltech Library",
+            "email": "rsdoiel@caltech.edu",
+            "@id": "https://orcid.org/0000-0003-0900-6903"
+        }
+    ],
+    "developmentStatus": "active",
+    "downloadUrl": "https://github.com/caltechlibrary/tmplfn/releases",
+    "keywords": [
+        "go",
+        "templates"
+    ],
+    "maintainer": "https://orcid.org/0000-0003-0900-6903",
+    "programmingLanguage": [
+        "Go"
+    ]
+}
