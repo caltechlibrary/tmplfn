@@ -277,6 +277,17 @@ var (
 		"urlencode": func(s string) string {
 			return url.QueryEscape(s)
 		},
+		"url_path_escape": func(s string) string {
+			return url.PathEscape(s)
+		},
+		"url_path_unescape": func(s string) string {
+			sDecoded, err := url.PathUnescape(s)
+			if err != nil {
+				log.Printf("Bad encoding request: %q, %s\n", s, err)
+				return ""
+			}
+			return sDecoded
+		},
 		"stringify": func(data interface{}, prettyPrint bool) string {
 			if prettyPrint == true {
 				if buf, err := json.MarshalIndent(data, "", "\t"); err == nil {
