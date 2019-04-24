@@ -624,7 +624,7 @@ func New(fm template.FuncMap) *Tmpl {
 func (t *Tmpl) ReadFiles(fNames ...string) error {
 	for _, fname := range fNames {
 		if info, err := os.Stat(fname); err != nil {
-			return err
+			return fmt.Errorf("%q, %s", fname, err)
 		} else if info.IsDir() == true {
 			if files, err := ioutil.ReadDir(fname); err == nil {
 				for _, file := range files {
@@ -633,14 +633,14 @@ func (t *Tmpl) ReadFiles(fNames ...string) error {
 					ext := path.Ext(pname)
 					if file.IsDir() != true && ext == ".tmpl" {
 						if src, err := ioutil.ReadFile(pname); err != nil {
-							return err
+							return fmt.Errorf("%q, %s", pname, err)
 						} else {
 							t.Code[tname] = src
 						}
 					}
 				}
 			} else {
-				return err
+				return fmt.Errorf("%q, %s", fname, err)
 			}
 		} else if src, err := ioutil.ReadFile(fname); err == nil {
 			tname := path.Base(fname)
