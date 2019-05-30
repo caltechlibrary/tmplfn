@@ -8,6 +8,8 @@
 + [ ] Documentation, examples, tutorials of using tmplfn in Go as well as the functions in text/templates
     + [ ] Basic text/templates built-in functionality
     + [ ] Funtionality added by tmplfn
++ [ ] Add Go native Lunrjs index and search generation support
+    + [ ] Does it make sense to make _ws_ Lunrjs index aware?
 
 ## Someday, Maybe
 
