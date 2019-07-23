@@ -25,8 +25,8 @@ import (
 
 	// 3rd Party Packages
 	"github.com/microcosm-cc/bluemonday"
-	//blackfridayV1 "github.com/russross/blackfriday"
-	"gopkg.in/russross/blackfriday.v2"
+	//blackfriday (forked to track v2 changes at "github.com/russross/blackfriday")
+	"github.com/caltechlibrary/blackfriday"
 )
 
 var (
