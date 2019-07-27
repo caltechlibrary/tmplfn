@@ -3,6 +3,7 @@
 
 ## Next
 
++ [ ] Drop blackfriday and embedded Markdown support, never used it
 + [ ] unslug, slug
 + [ ] english_title
 + [ ] Documentation, examples, tutorials of using tmplfn in Go as well as the functions in text/templates
