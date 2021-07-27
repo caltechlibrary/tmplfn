@@ -6,7 +6,7 @@
     "codeRepository": "https://github.com/caltechlibrary/tmplfn",
     "issueTracker": "https://github.com/caltechlibrary/tmplfn/issues",
     "license": "https://data.caltech.edu/license",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "author": [
         {
             "@type": "Person",
@@ -18,7 +18,7 @@
         }
     ],
     "developmentStatus": "inactive",
-    "downloadUrl": "https://github.com/caltechlibrary/tmplfn/releases",
+    "downloadUrl": "https://github.com/caltechlibrary/tmplfn/archive/main.zip",
     "keywords": [
         "go",
         "templates"
@@ -26,5 +26,10 @@
     "maintainer": "https://orcid.org/0000-0003-0900-6903",
     "programmingLanguage": [
         "Go"
-    ]
+    ],
+    "funder": [{ 
+          "@id": "https://doi.org/10.13039/100006961",
+          "@type": "Organization",
+          "name": "Caltech Library"
+  }]
 }
